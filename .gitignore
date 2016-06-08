@@ -1,0 +1,9 @@
+packer_cache
+.vagrant
+disks
+ssh_conf
+output-qemu/
+.vagrant/
+vagrant_env.conf
+*.box
+packer_vars
