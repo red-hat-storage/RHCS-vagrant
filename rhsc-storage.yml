@@ -1,0 +1,48 @@
+# Based on the instructions from https://mojo.redhat.com/docs/DOC-1060392
+- hosts: all
+  become: yes
+  tasks:
+    - name: Fix Red Hat DNS server
+      lineinfile: dest=/etc/resolv.conf regexp=^nameserver line='nameserver 10.38.5.26'
+
+    - name: Disable gpgcheck in yum.conf globally
+      lineinfile: dest=/etc/yum.conf regexp=^gpgcheck= line=gpgcheck=0
+
+    - name: Prevent ansible from creating retry files
+      lineinfile: dest=/etc/ansible/ansible.cfg regexp=#retry_files_enabled line='retry_files_enabled = False'
+
+    - name: Add the RHSC-2.0 repo to the machine
+      command: yum-config-manager --add http://puddle.ceph.redhat.com/puddles/rhscon/2/latest/RHSCON-2.repo
+      args:
+        creates: /etc/yum.repos.d/RHSCON-2.repo
+
+    - name: Add CEPH-2.0 repo
+      command: yum-config-manager --add http://puddle.ceph.redhat.com/puddles/ceph/2/latest/CEPH-2.repo
+      args:
+        creates: /etc/yum.repos.d/CEPH-2.repo
+
+    - name: Add the rhscon jenkins repo (TILL PUDDLES ARE RESPUN)
+      command: yum-config-manager --add http://jenkins.lab.eng.blr.redhat.com/rhscon/rhscon.repo
+      args:
+        creates: /etc/yum.repos.d/rhscon.repo
+
+    # - name: Install salt repo
+    #   yum: name=https://repo.saltstack.com/yum/redhat/salt-repo-latest-1.el7.noarch.rpm disable_gpg_check=yes
+
+    - name: Remove current machine-id
+      file: path=/etc/machine-id state=absent
+
+    - name: Regenerate new randome machine-id
+      command: systemd-machine-id-setup
+
+    - name: Setup ansible handshake with ceph-installer
+      command: bash -c "curl http://RHS-C:8181/setup/ | bash"
+
+    - name: Install the rhscon-agent packages
+      command: bash -c "curl http://RHS-C:8181/setup/agent/ | bash"
+      register: install_code
+
+    # - uri:
+    #   url: http://RHS-C:8181/api/tasks/9c5c1771-d86a-4fe1-b596-2033a6914ac9/
+    #   method: GET
+    #   return_content: yes

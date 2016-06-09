@@ -1,0 +1,76 @@
+# Based on the instructions from https://mojo.redhat.com/docs/DOC-1060392
+- hosts: all
+  become: yes
+  tasks:
+    - name: Fix Red Hat DNS server
+      lineinfile: dest=/etc/resolv.conf regexp=^nameserver line='nameserver 10.38.5.26'
+
+    - name: Add the RHSC-2.0 repo to the machine
+      command: yum-config-manager --add http://puddle.ceph.redhat.com/puddles/rhscon/2/latest/RHSCON-2.repo
+      args:
+        creates: /etc/yum.repos.d/RHSCON-2.repo
+
+    - name: Add the rhscon jenkins repo (TILL PUDDLES ARE RESPUN)
+      command: yum-config-manager --add http://jenkins.lab.eng.blr.redhat.com/rhscon/rhscon.repo
+      args:
+        creates: /etc/yum.repos.d/rhscon.repo
+
+    # - name: Install salt repo
+    #   yum: name=https://repo.saltstack.com/yum/redhat/salt-repo-latest-1.el7.noarch.rpm disable_gpg_check=yes
+
+    - name: Disable gpgcheck in yum.conf globally
+      lineinfile: dest=/etc/yum.conf regexp=^gpgcheck= line=gpgcheck=0
+
+    - name: Prevent ansible from creating retry files
+      lineinfile: dest=/etc/ansible/ansible.cfg regexp=#retry_files_enabled line='retry_files_enabled = False'
+
+    - name: Install rhscon packages
+      yum: name={{ item }} disable_gpg_check=yes
+      with_items:
+        - rhscon-core
+        - rhscon-ceph
+        - rhscon-ui
+
+    - name: Install python-pip (necessary for pexpect)
+      yum: name=python-pip disable_gpg_check=yes enablerepo=epel
+
+    - name: Install pexpect (dependency for ansible expect later on)
+      pip: name=pexpect
+
+    - name: Update the configuration file to update ceph-installer flags
+      lineinfile: dest=/etc/skyring/providers.d/ceph.conf regexp=redhatstorage line='        "redhatstorage":false,'
+
+    - name: Update the configuration file to update ceph-installer flags
+      lineinfile: dest=/etc/skyring/providers.d/ceph.conf regexp=redhatusecdn line='        "redhatusecdn":false'
+
+    - name: Edit the UI configuration for allowing cluster creation with single MON
+      lineinfile: "dest=/usr/share/skyring/webapp/config/config.json regexp=ceph_min_monitors line='    \"ceph_min_monitors\": 1,'"
+
+    - name: Run the following script to setup skyring
+      expect:
+        command: skyring-setup
+        responses:
+          (?i)Would you like to create one now?: "yes"
+          (?i)Username: ""
+          (?i)Email: ""
+          (?i)Password: "redhat"
+          (?i)Do you wish setup to configure that: "N" # Configure for HTTP
+          # (?i)Do you wish setup to configure that: "Y" # Configure for HTTPS
+          (?i)Enter pass phrase: "redhat"
+          (?i)Country: ""
+          (?i)State: ""
+          (?i)Locality: ""
+          (?i)Organization: ""
+          (?i)Organizational: ""
+          (?i)Common: ""
+          (?i)A challenge password: ""
+          (?i)An optional company name: ""
+
+    - template: src=/vagrant/ansible-rhsc-pre-requirements.yml dest=/usr/share/ceph-ansible/roles/ceph-agent/tasks/pre_requisite.yml owner=root group=root mode=0644
+
+    - name: Fix dashboard collectd issues BZ 1339979
+      replace: dest=/srv/salt/collectd/files/collectd.conf regexp='fqdn' replace='id'
+
+
+    - name: Restart skyring to reload changes in collectd template
+      service: name=skyring state=restarted

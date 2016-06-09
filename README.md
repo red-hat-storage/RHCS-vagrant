@@ -66,6 +66,8 @@ Source: <http://demobuilder.gps.hst.ams2.redhat.com/> From Jim Minter's Demo Bui
 * Decide how many MON nodes and how many OSDs you need
 * Wait a while
 
+
+
 ## Usage
 * You can connect to each VM with `vagrant ssh` and the name of the VM you want to connect to
 * Each VM is called RHCSx where x starts with 1
