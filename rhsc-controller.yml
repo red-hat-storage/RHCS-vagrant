@@ -54,8 +54,8 @@
           (?i)Username: ""
           (?i)Email: ""
           (?i)Password: "redhat"
-          (?i)Do you wish setup to configure that: "N" # Configure for HTTP
-          # (?i)Do you wish setup to configure that: "Y" # Configure for HTTPS
+          # (?i)Do you wish: "N" # Configure for HTTP
+          (?i)Do you wish: "Y" # Configure for HTTPS
           (?i)Enter pass phrase: "redhat"
           (?i)Country: ""
           (?i)State: ""
