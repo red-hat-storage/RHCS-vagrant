@@ -1,6 +1,6 @@
-# RHCS (1.3.0, 1.3.1, 1.3.2, 2.0.0) in Vagrant
+# RHSC / USM / RHSCON in Vagrant (Based on RHSC 2.0.0)
 
-A Vagrant setup for Red Hat Ceph Storage based on RHEL 7. This will setup as many RHCS nodes as you want with a number of OSDs that you can define! 
+A Vagrant setup for Red Hat Ceph Storage based on RHEL 7. This will setup as many RHCS nodes as you want with a number of OSDs that you can define! As added Bonus you get a VM for USM, which will allow you to easily configure the Ceph environment.
 
 
 ## Requirements
@@ -60,17 +60,24 @@ Source: <http://demobuilder.gps.hst.ams2.redhat.com/> From Jim Minter's Demo Bui
 ## Get started
 * Clone this repository
  * `git clone git@github.com:red-hat-storage/RHCS-vagrant.git`
-* Init git submodules `git submodule init ceph-ansible && git submodule update ceph-ansible`
-* Run `vagrant up`
-	* If you have multiple virtualisation programs installed, you might need to explicitely select one like this: `vagrant up --provider=libvirt`    
-* Decide how many MON nodes and how many OSDs you need
-* Wait a while
+* switch into this branch
+ *  `git checkout RHSC`
+* Run `vagrant up --no-provision`
+	* If you have multiple virtualisation programs installed, you might need to explicitely select one like this: `vagrant up --provider=libvirt --no-provision`    
+* Decide how many storage nodes and disks these nodes should have
+* Wait a while for the deployment to finish
+* First provision the USM node:
+ * `vagrant provision RHS-C`
+* Then provision your storage nodes:
+ * `vagrant provision RHCS1 RHCS2 RHCS3 [...]` (Depending on how many storage nodes you have started)
+* Connect to http://localhost:8080
+ * Username: admin / Password: admin 
 
 
 
 ## Usage
 * You can connect to each VM with `vagrant ssh` and the name of the VM you want to connect to
-* Each VM is called RHCSx where x starts with 1
+* Each VM is called RHCSx where x starts with 1 and there is also one RHS-C VM for USM
  * RHCS1 is your first VM and it counts up depending on the amount of VMs you spawn
 * There are also other vagrant commands you should check out!
  * Try vagrant -h to find out about them
