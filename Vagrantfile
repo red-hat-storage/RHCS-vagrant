@@ -58,56 +58,6 @@ if ARGV[0] == "up"
     end
   end
 
-  print "\e[1;37mHow many MON servers do you want to deploy? Default: 1 \e[32m"
-
-  while numberOfMON < 1
-    numberOfMON = $stdin.gets.strip.to_i
-    if numberOfMON == 0 # The user pressed enter without input or we cannot parse the input to a number
-      numberOfMON = 2
-    elsif numberOfMON < 1
-      print "\e[31mWe need at least 1 disk ;) Try again \e[32m"
-    elsif numberOfMON > 5
-      print "\e[31mWe don't support more than 5 disks - Try again \e[32m"
-    end
-  end
-  print "\e[1;37mHow many RGW servers do you want to deploy? Default: 0 \e[32m"
-
-  while numberOfRGW < 1
-    numberOfRGW = $stdin.gets.strip.to_i
-    if numberOfRGW == 0 # The user pressed enter without input or we cannot parse the input to a number
-      numberOfRGW = 2
-    elsif numberOfRGW < 1
-      print "\e[31mWe need at least 1 disk ;) Try again \e[32m"
-    elsif numberOfRGW > 5
-      print "\e[31mWe don't support more than 5 disks - Try again \e[32m"
-    end
-  end
-  print "\e[1;37mHow many MDS servers do you want to deploy? Default: 0 \e[32m"
-
-  while numberOfMDS < 1
-    numberOfMDS = $stdin.gets.strip.to_i
-    if numberOfMDS == 0 # The user pressed enter without input or we cannot parse the input to a number
-      numberOfMDS = 2
-    elsif numberOfMDS < 1
-      print "\e[31mWe need at least 1 disk ;) Try again \e[32m"
-    elsif numberOfMDS > 5
-      print "\e[31mWe don't support more than 5 disks - Try again \e[32m"
-    end
-  end
-  print "\e[1;37mHow many Client servers do you want to deploy? Default: 0 \e[32m"
-
-  while numberOfClient < 1
-    numberOfClient = $stdin.gets.strip.to_i
-    if numberOfClient == 0 # The user pressed enter without input or we cannot parse the input to a number
-      numberOfClient = 2
-    elsif numberOfClient < 1
-      print "\e[31mWe need at least 1 disk ;) Try again \e[32m"
-    elsif numberOfClient > 5
-      print "\e[31mWe don't support more than 5 disks - Try again \e[32m"
-    end
-  end
-
-
   while true
     print "\n\e[1;37mDo you want me to set the ceph cluster up? Default: yes \e[32m"
     answer = $stdin.gets.strip.to_s.downcase
@@ -155,14 +105,6 @@ ansibleHostsFile = "[mons]\n  MON\n\n[osds]\n"
 (1..numberOfVMs).each do |num|
   ansibleHostsFile += "  OSD#{num.to_s}\n"
 end
-
-  ansible.groups = {
-    'mons'        => (0..NMONS - 1).map { |j| "MON#{j}" },
-    'osds'        => (0..NOSDS - 1).map { |j| "OSD#{j}" },
-    'mdss'        => (0..NMDSS - 1).map { |j| "MDS#{j}" },
-    'rgws'        => (0..NRGWS - 1).map { |j| "RGW#{j}" },
-    'clients'     => (0..NCLIENTS - 1).map { |j| "CLIENT#{j}" }
-  }
 
 def vBoxAttachDisks(numDisk, provider, boxName)
   for i in 1..numDisk.to_i
