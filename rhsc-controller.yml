@@ -6,7 +6,7 @@
       lineinfile: dest=/etc/resolv.conf regexp=^nameserver line='nameserver 10.38.5.26'
 
     - name: Add the RHSC-2.0 repo to the machine
-      command: yum-config-manager --add http://puddle.ceph.redhat.com/puddles/rhscon/2/latest/RHSCON-2.repo
+      command: yum-config-manager --add http://puddle.ceph.redhat.com/puddles/rhscon/2/latest/rhscon-2-rhel-7.conf
       args:
         creates: /etc/yum.repos.d/RHSCON-2.repo
 
