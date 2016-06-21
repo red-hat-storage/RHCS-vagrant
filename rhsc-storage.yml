@@ -12,7 +12,7 @@
       lineinfile: dest=/etc/ansible/ansible.cfg regexp=#retry_files_enabled line='retry_files_enabled = False'
 
     - name: Add the RHSC-2.0 repo to the machine
-      command: yum-config-manager --add http://puddle.ceph.redhat.com/puddles/rhscon/2/latest/RHSCON-2.repo
+      command: yum-config-manager --add http://puddle.ceph.redhat.com/puddles/rhscon/2/latest/Server-RH7-RHSCON-CEPH-INSTALLER-2.repo
       args:
         creates: /etc/yum.repos.d/RHSCON-2.repo
 
@@ -25,6 +25,11 @@
       command: yum-config-manager --add http://jenkins.lab.eng.blr.redhat.com/rhscon/rhscon.repo
       args:
         creates: /etc/yum.repos.d/rhscon.repo
+
+    - name: Add the RHEL extra repo
+      command: yum-config-manager --add http://download.eng.bos.redhat.com/rel-eng/updates/latest-EXTRAS-7-RHEL-7/compose/Server/x86_64/os
+      # args:
+        # creates: /etc/yum.repos.d/rhscon.repo
 
     # - name: Install salt repo
     #   yum: name=https://repo.saltstack.com/yum/redhat/salt-repo-latest-1.el7.noarch.rpm disable_gpg_check=yes
