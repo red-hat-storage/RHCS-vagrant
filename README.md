@@ -35,7 +35,7 @@ A Vagrant setup for Red Hat Ceph Storage based on RHEL 7. This will setup as man
 	# -------------------
 
 	# Install nfs-utils, tigervnc and vagrant-libvirt
-	sudo dnf -y install nfs-utils tigervnc vagrant-libvirt
+	sudo dnf -y install nfs-utils tigervnc vagrant-libvirt ruby-devel zlib-devel
 
 	# Now follow RHEL 7 and Fedora instructions (see below)
 
