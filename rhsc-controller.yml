@@ -43,8 +43,10 @@
     - name: Update the configuration file to update ceph-installer flags
       lineinfile: dest=/etc/skyring/providers.d/ceph.conf regexp=redhatusecdn line='        "redhatusecdn":false'
 
-    - name: Edit the UI configuration for allowing cluster creation with single MON
-      lineinfile: "dest=/usr/share/skyring/webapp/config/config.json regexp=ceph_min_monitors line='    \"ceph_min_monitors\": 1,'"
+# Removed because of https://bugzilla.redhat.com/show_bug.cgi?id=1354102
+# To allow for 1 MON clusters you need to modify min_monitors_in_cluster in /etc/skyring/providers.d/ceph.conf additionally
+    # - name: Edit the UI configuration for allowing cluster creation with single MON
+    #   lineinfile: "dest=/usr/share/skyring/webapp/config/config.json regexp=ceph_min_monitors line='    \"ceph_min_monitors\": 1,'"
 
     - name: Run the following script to setup skyring
       expect:
