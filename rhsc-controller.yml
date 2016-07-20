@@ -5,15 +5,35 @@
     - name: Fix Red Hat DNS server
       lineinfile: dest=/etc/resolv.conf regexp=^nameserver line='nameserver 10.38.5.26'
 
-    - name: Add the RHSC-2.0 repo to the machine
-      command: yum-config-manager --add http://puddle.ceph.redhat.com/puddles/rhscon/2/latest/Server-RH7-RHSCON-CEPH-INSTALLER-2.repo
+    - name: Add the RHSC-2.0-Agent repo to the machine
+      command: yum-config-manager --add http://download.eng.bos.redhat.com/rcm-guest/ceph-drops/auto/rhscon-2-rhel-7-compose/latest-RHSCON-2-RHEL-7/compose/Agent/x86_64/os/
       args:
-        creates: /etc/yum.repos.d/RHSCON-2.repo
+        creates: /etc/yum.repos.d/download.eng.bos.redhat.com_rcm-guest_ceph-drops_auto_rhscon-2-rhel-7-compose_latest-RHSCON-2-RHEL-7_compose_Agent_x86_64_os_.repo
 
-    - name: Add the rhscon jenkins repo (TILL PUDDLES ARE RESPUN)
-      command: yum-config-manager --add http://jenkins.lab.eng.blr.redhat.com/rhscon/rhscon.repo
+    - name: Add the RHSC-2.0-Installer repo to the machine
+      command: yum-config-manager --add http://download.eng.bos.redhat.com/rcm-guest/ceph-drops/auto/rhscon-2-rhel-7-compose/latest-RHSCON-2-RHEL-7/compose/Installer/x86_64/os/
       args:
-        creates: /etc/yum.repos.d/rhscon.repo
+        creates: /etc/yum.repos.d/download.eng.bos.redhat.com_rcm-guest_ceph-drops_auto_rhscon-2-rhel-7-compose_latest-RHSCON-2-RHEL-7_compose_Installer_x86_64_os_.repo
+
+    - name: Add the RHSC-2.0-Main repo to the machine
+      command: yum-config-manager --add http://download.eng.bos.redhat.com/rcm-guest/ceph-drops/auto/rhscon-2-rhel-7-compose/latest-RHSCON-2-RHEL-7/compose/Main/x86_64/os/
+      args:
+        creates: /etc/yum.repos.d/download.eng.bos.redhat.com_rcm-guest_ceph-drops_auto_rhscon-2-rhel-7-compose_latest-RHSCON-2-RHEL-7_compose_Main_x86_64_os_.repo
+
+    - name: Add CEPH-2.0-MON repo
+      command: yum-config-manager --add http://download.eng.bos.redhat.com/rcm-guest/ceph-drops/auto/ceph-2-rhel-7-compose/latest-Ceph-2-RHEL-7/compose/MON/x86_64/os/
+      args:
+        creates: /etc/yum.repos.d/download.eng.bos.redhat.com_rcm-guest_ceph-drops_auto_ceph-2-rhel-7-compose_latest-Ceph-2-RHEL-7_compose_MON_x86_64_os_.repo
+
+    - name: Add CEPH-2.0-OSD repo
+      command: yum-config-manager --add http://download.eng.bos.redhat.com/rcm-guest/ceph-drops/auto/ceph-2-rhel-7-compose/latest-Ceph-2-RHEL-7/compose/OSD/x86_64/os/
+      args:
+        creates: /etc/yum.repos.d/download.eng.bos.redhat.com_rcm-guest_ceph-drops_auto_ceph-2-rhel-7-compose_latest-Ceph-2-RHEL-7_compose_OSD_x86_64_os_.repo
+
+    - name: Add CEPH-2.0-Tools repo
+      command: yum-config-manager --add http://download.eng.bos.redhat.com/rcm-guest/ceph-drops/auto/ceph-2-rhel-7-compose/latest-Ceph-2-RHEL-7/compose/Tools/x86_64/os/
+      args:
+        creates: /etc/yum.repos.d/download.eng.bos.redhat.com_rcm-guest_ceph-drops_auto_ceph-2-rhel-7-compose_latest-Ceph-2-RHEL-7_compose_Tools_x86_64_os_.repo
 
     # - name: Install salt repo
     #   yum: name=https://repo.saltstack.com/yum/redhat/salt-repo-latest-1.el7.noarch.rpm disable_gpg_check=yes
@@ -23,6 +43,26 @@
 
     - name: Prevent ansible from creating retry files
       lineinfile: dest=/etc/ansible/ansible.cfg regexp=#retry_files_enabled line='retry_files_enabled = False'
+
+    # - name: Downgrade ansible (for RHSCON)
+    #   command: yum downgrade ansible-1.9.4 -y 
+
+    - name: Install ceph-installer dependencies except ansible
+      shell: for i in `yum deplist ceph-installer | grep provider | grep -v ansible | awk -e '{print $2}'`; do yum install -y $i; done
+
+    - name: Get latest ceph-installer rpm package
+      shell: wget $(yum list ceph-installer | grep ceph-installer | sed 's/.noarch//' | awk -e '{print "http://download.eng.bos.redhat.com/rcm-guest/ceph-drops/auto/rhscon-2-rhel-7-compose/latest-RHSCON-2-RHEL-7/compose/Installer/x86_64/os/Packages/" $1 "-" $2 ".noarch.rpm"}')  -O /tmp/ceph-installer.rpm
+
+    - name: Cheat the system and install ceph-installer with newer ansible (ignoring all dependencies)
+      command: rpm -Uvh --nodeps /tmp/ceph-installer.rpm
+      ignore_errors: yes # will error mostly due to the fact that the thing is already installed...
+
+    - name: Get latest ceph-ansible rpm package
+      shell: wget $(yum list ceph-ansible | grep ceph-ansible | sed 's/.noarch//' | awk -e '{print "http://download.eng.bos.redhat.com/rcm-guest/ceph-drops/auto/rhscon-2-rhel-7-compose/latest-RHSCON-2-RHEL-7/compose/Installer/x86_64/os/Packages/" $1 "-" $2 ".noarch.rpm"}')  -O /tmp/ceph-ansible.rpm
+
+    - name: Cheat the system and install ceph-ansible with newer ansible (ignoring all dependencies)
+      command: rpm -Uvh --nodeps /tmp/ceph-ansible.rpm
+      ignore_errors: yes # will error mostly due to the fact that the thing is already installed...
 
     - name: Install rhscon packages
       yum: name={{ item }} disable_gpg_check=yes
@@ -70,8 +110,8 @@
 
     - template: src=/vagrant/ansible-rhsc-pre-requirements.yml dest=/usr/share/ceph-ansible/roles/ceph-agent/tasks/pre_requisite.yml owner=root group=root mode=0644
 
-    - name: Fix dashboard collectd issues BZ 1339979
-      replace: dest=/srv/salt/collectd/files/collectd.conf regexp='fqdn' replace='id'
+    # - name: Fix dashboard collectd issues BZ 1339979
+    #   replace: dest=/srv/salt/collectd/files/collectd.conf regexp='fqdn' replace='id'
 
 
     - name: Restart skyring to reload changes in collectd template
