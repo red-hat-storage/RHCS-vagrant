@@ -175,7 +175,7 @@ Vagrant.configure(2) do |config|
       vb.name = "RHS-C"
     
       # Customize the amount of memory and vCPU in the VM:
-      vb.memory = VMMEM
+      vb.memory = 2500
       vb.cpus = VMCPU
 
       vBoxAttachDisks( numberOfDisks, vb, 'RHS-C' )
@@ -186,7 +186,7 @@ Vagrant.configure(2) do |config|
       override.vm.synced_folder '.', '/vagrant', type: 'rsync'
     
       # Customize the amount of memory and vCPU in the VM:
-      lv.memory = VMMEM
+      lv.memory = 2500
       lv.cpus = VMCPU
 
       lvAttachDisks( numberOfDisks, lv )
