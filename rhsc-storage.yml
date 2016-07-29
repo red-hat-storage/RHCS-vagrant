@@ -80,8 +80,8 @@
     - name: Manually place the ssh authorized key in the new location
       get_url: url="http://RHS-C:8181/setup/key/" dest=/var/lib/ceph-installer/.ssh/authorized_keys owner=ceph-installer mode=0600
 
-    - name: Setup ansible handshake with ceph-installer
-      command: bash -c "curl http://RHS-C:8181/setup/ | bash"
+    # - name: Setup ansible handshake with ceph-installer
+    #   command: bash -c "curl http://RHS-C:8181/setup/ | bash"
 
     - name: Install the rhscon-agent packages
       command: bash -c "curl http://RHS-C:8181/setup/agent/ | bash"

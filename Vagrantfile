@@ -85,12 +85,12 @@ diskNames = ['vda', 'vdb', 'vdc', 'vdd', 'vde']
 
 hostsFile = "192.168.15.200 RHS-C RHSC\n"
 (1..numberOfVMs).each do |num|
-  hostsFile += "192.168.15.#{( 99 + num).to_s} RHCS#{num.to_s}\n"
+  hostsFile += "192.168.15.#{( 99 + num).to_s} rhcs#{num.to_s}\n"
 end
 
 ansibleHostsFile = "[rhsc]\n  RHSC\n\n[ceph]\n"
 (1..numberOfVMs).each do |num|
-  ansibleHostsFile += "  RHCS#{num.to_s}\n"
+  ansibleHostsFile += "  rhcs#{num.to_s}\n"
 end
 
 def vBoxAttachDisks(numDisk, provider, boxName)
@@ -113,23 +113,23 @@ end
 Vagrant.configure(2) do |config|
 
   (1..numberOfVMs).each do |vmNum|
-    config.vm.define "RHCS#{vmNum.to_s}" do |copycat|
+    config.vm.define "rhcs#{vmNum.to_s}" do |copycat|
       # This will be the private VM-only network where Ceph traffic will flow
       copycat.vm.network "private_network", ip: ( "192.168.15." + (99 + vmNum).to_s ), model_type: "rtl8139"
-      copycat.vm.hostname = "RHCS#{vmNum.to_s}"
+      copycat.vm.hostname = "rhcs#{vmNum.to_s}"
 
       copycat.vm.provider "virtualbox" do |vb, override|
         override.vm.box = VBOXURL
 
         # Don't display the VirtualBox GUI when booting the machine
         vb.gui = false
-        vb.name = "RHCS#{vmNum.to_s}-v2.0"
+        vb.name = "rhcs#{vmNum.to_s}-v2.0"
       
         # Customize the amount of memory and vCPU in the VM:
         vb.memory = VMMEM
         vb.cpus = VMCPU
 
-        vBoxAttachDisks( numberOfDisks, vb, "RHCS#{vmNum.to_s}" )
+        vBoxAttachDisks( numberOfDisks, vb, "rhcs#{vmNum.to_s}" )
       end
 
       copycat.vm.provider "libvirt" do |lv, override|
@@ -149,7 +149,7 @@ Vagrant.configure(2) do |config|
         ansible.verbose = true
       end
 
-      copycat.vm.post_up_message = "\e[37mBuilding of this VM is finished \nYou can access it now with: \nvagrant ssh RHCS#{vmNum.to_s}\e[32m"
+      copycat.vm.post_up_message = "\e[37mBuilding of this VM is finished \nYou can access it now with: \nvagrant ssh rhcs#{vmNum.to_s}\e[32m"
 
     end
   end
@@ -201,7 +201,7 @@ Vagrant.configure(2) do |config|
     
     csshCmd = "vagrant ssh-config > ssh_conf; csshx --ssh_args '-F #{VAGRANT_ROOT}/ssh_conf' RHS-C "
     (1..numberOfVMs).each do |num|
-      csshCmd += "RHCS#{num.to_s} "
+      csshCmd += "rhcs#{num.to_s} "
     end
 
     mainbox.vm.post_up_message = "If you don't see any text below, it's because the text color is white ;)\n\e[37mBuilding of this VM is finished \nYou can access it now with: \nvagrant ssh RHS-C\nI already connected the RHCS nodes with gluster peer probe for your convenience\n\n csshX Command line:\n#{csshCmd}\e[32m"
