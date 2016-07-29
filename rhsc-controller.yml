@@ -5,6 +5,11 @@
     - name: Fix Red Hat DNS server
       lineinfile: dest=/etc/resolv.conf regexp=^nameserver line='nameserver 10.38.5.26'
 
+    - name: Prevent DNS lookup by SSH
+      lineinfile: dest=/etc/ssh/sshd_config regexp=^UseDNS line='UseDNS no'
+      notify:
+        - restart sshd
+
     - name: Add the RHSC-2.0-Agent repo to the machine
       command: yum-config-manager --add http://download.eng.bos.redhat.com/rcm-guest/ceph-drops/auto/rhscon-2-rhel-7-compose/latest-RHSCON-2-RHEL-7/compose/Agent/x86_64/os/
       args:
@@ -118,3 +123,8 @@
 
     - name: Restart skyring to reload changes in collectd template
       service: name=skyring state=restarted
+
+
+  handlers:
+    - name: restart sshd
+      service: name=sshd state=restarted

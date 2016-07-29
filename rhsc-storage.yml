@@ -5,6 +5,11 @@
     - name: Fix Red Hat DNS server
       lineinfile: dest=/etc/resolv.conf regexp=^nameserver line='nameserver 10.38.5.26'
 
+    - name: Prevent DNS lookup by SSH
+      lineinfile: dest=/etc/ssh/sshd_config regexp=^UseDNS line='UseDNS no'
+      notify:
+        - restart sshd
+
     - name: Disable gpgcheck in yum.conf globally
       lineinfile: dest=/etc/yum.conf regexp=^gpgcheck= line=gpgcheck=0
 
@@ -81,6 +86,10 @@
     - name: Install the rhscon-agent packages
       command: bash -c "curl http://RHS-C:8181/setup/agent/ | bash"
       register: install_code
+
+  handlers:
+    - name: restart sshd
+      service: name=sshd state=restarted
 
     # - uri:
     #   url: http://RHS-C:8181/api/tasks/9c5c1771-d86a-4fe1-b596-2033a6914ac9/
