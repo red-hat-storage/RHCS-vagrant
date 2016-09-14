@@ -14,11 +14,11 @@ VAGRANT_ROOT = File.dirname(File.expand_path(__FILE__))
 #VBOXURL = "http://file.rdu.redhat.com/~cblum/vagrant-storage/packer_vb_RHCS1.3.1.box"
 #LVBOXURL = "http://file.rdu.redhat.com/~cblum/vagrant-storage/packer_lv_RHCS1.3.1.box"
 
-VBOXURL = "http://file.rdu.redhat.com/~cblum/vagrant-storage/packer_vb_RHCS1.3.2.box"
-LVBOXURL = "http://file.rdu.redhat.com/~cblum/vagrant-storage/packer_lv_RHCS1.3.2.box"
+# VBOXURL = "http://file.rdu.redhat.com/~cblum/vagrant-storage/packer_vb_RHCS1.3.2.box"
+# LVBOXURL = "http://file.rdu.redhat.com/~cblum/vagrant-storage/packer_lv_RHCS1.3.2.box"
 
-#VBOXURL = "http://file.rdu.redhat.com/~cblum/vagrant-storage/packer_vb_RHCS2.0.0.box"
-#LVBOXURL = "http://file.rdu.redhat.com/~cblum/vagrant-storage/packer_lv_RHCS2.0.0.box"
+VBOXURL = "http://file.rdu.redhat.com/~cblum/vagrant-storage/packer_vb_RHCS2.0.0.box"
+LVBOXURL = "http://file.rdu.redhat.com/~cblum/vagrant-storage/packer_lv_RHCS2.0.0.box"
 
 numberOfVMs = 0
 numberOfDisks = -1

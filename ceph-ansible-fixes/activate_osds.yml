@@ -1,0 +1,131 @@
+---
+# NOTE (leseb) : this task is for disk devices only because of the explicit use of the first
+# partition.
+
+- name: automatically activate osd disk(s) without partitions
+  command: ceph-disk activate "/dev/{{ item.key }}"
+  ignore_errors: true
+  with_dict: ansible_devices
+  when:
+    - ansible_devices is defined
+    - item.value.removable == "0"
+    - item.value.partitions|count == 0
+    - journal_collocation
+    - osd_auto_discovery
+
+- name: activate osd(s) when device is a disk
+  command: ceph-disk activate {{ item.1 | regex_replace('^(\/dev\/cciss\/c[0-9]{1}d[0-9]{1})$', '\\1p') }}1
+  with_together:
+    - "{{ ispartition_results.results }}"
+    - "{{ devices }}"
+  changed_when: false
+  failed_when: false
+  register: activate_osd_disk
+  when:
+    - not osd_auto_discovery
+    - not item.0.get("skipped")
+    - item.0.get("rc", 0) != 0
+    - raw_multi_journal
+
+- name: automatically activate osd disk(s) without partitions (dmcrypt)
+  command: ceph-disk activate --dmcrypt "/dev/{{ item.key }}"
+  ignore_errors: true
+  with_dict: ansible_devices
+  when:
+    - ansible_devices is defined
+    - item.value.removable == "0"
+    - item.value.partitions|count == 0
+    - osd_auto_discovery
+    - dmcrypt_journal_collocation
+
+- name: activate osd(s) when device is a disk (dmcrypt)
+  command: ceph-disk activate --dmcrypt {{ item.1 | regex_replace('^(\/dev\/cciss\/c[0-9]{1}d[0-9]{1})$', '\\1p') }}1
+  with_together:
+    - "{{ ispartition_results.results }}"
+    - "{{ devices }}"
+  changed_when: false
+  failed_when: false
+  register: activate_osd_disk_dmcrypt
+  when:
+    - not osd_auto_discovery
+    - not item.0.get("skipped")
+    - item.0.get("rc", 0) != 0
+    - dmcrypt_dedicated_journal
+
+# NOTE (leseb): we must do this because of
+# https://github.com/ansible/ansible/issues/4297
+- name: combine ispartition results
+  set_fact:
+    combined_activate_osd_disk_results: "{{ activate_osd_disk if not dmcrypt_journal_collocation else activate_osd_disk_dmcrypt }}"
+
+- name: fail if ceph-disk cannot create an OSD
+  fail:
+    msg: "ceph-disk failed to create an OSD"
+  when:
+    " 'ceph-disk: Error: ceph osd create failed' in item.get('stderr', '') "
+  with_items: "{{ combined_activate_osd_disk_results.results }}"
+  when: not combined_activate_osd_disk_results.get("skipped")
+
+# NOTE (leseb): this task is for partitions because we don't explicitly use a partition.
+- name: activate osd(s) when device is a partition
+  command: "ceph-disk activate {{ item.1 }}"
+  with_together:
+    - "{{ ispartition_results.results }}"
+    - "{{ devices }}"
+  changed_when: false
+  failed_when: false
+  when:
+    - not osd_auto_discovery
+    - not item.0.get("skipped")
+    - item.0.get("rc", 0) == 0
+
+- include: osd_fragment.yml
+  when: crush_location
+
+- name: set selinux to permissive and make it persistent
+  selinux:
+    policy: targeted
+    state: permissive
+  when:
+    - ansible_selinux != false
+    - ansible_selinux['status'] == 'enabled'
+    - ansible_selinux['config_mode'] != 'disabled'
+    - is_before_infernalis
+
+- name: start and add that the osd service(s) to the init sequence (before infernalis)
+  service:
+    name: ceph
+    state: started
+    enabled: yes
+  when:
+    - ansible_distribution != "Ubuntu"
+    - is_before_infernalis
+
+- name: get osd id (for or after infernalis)
+  shell: 'ls /var/lib/ceph/osd/ | grep -oP "\d+$"'
+  changed_when: false
+  failed_when: false
+  register: osd_id
+  when:
+    - use_systemd
+    - is_after_hammer
+
+- name: enable the osd service (for or after infernalis)
+  command: systemctl enable ceph-osd@{{ item }}
+  changed_when: false
+  failed_when: false
+  with_items: "{{ osd_id.stdout_lines }}"
+  when:
+    - use_systemd
+    - is_after_hammer
+
+- name: start and add that the osd service(s) to the init sequence (for or after infernalis)
+  service:
+    name: ceph-osd@{{ item }}
+    state: started
+    enabled: yes
+  with_items: "{{ osd_id.stdout_lines }}"
+  changed_when: false
+  when:
+    - use_systemd
+    - is_after_hammer
