@@ -8,56 +8,80 @@ VAGRANT_ROOT = File.dirname(File.expand_path(__FILE__))
 # Available RHCS base images (1.3.0, 1.3.1, 1.3.2, 2.0.0)
 #################
 
-#VBOXURL = "http://file.rdu.redhat.com/~cblum/vagrant-storage/packer_vb_RHCS1.3.0.box"
-#LVBOXURL = "http://file.rdu.redhat.com/~cblum/vagrant-storage/packer_lv_RHCS1.3.0.box"
+boxURL = {
+  "default" => {
+    :VBox => "http://file.rdu.redhat.com/~cblum/vagrant-storage/packer_vb_RHCS2.0.0.box",
+    :LVBox => "http://file.rdu.redhat.com/~cblum/vagrant-storage/packer_lv_RHCS2.0.0.box"
+  },
+  "1.3.0" => {
+    :VBox => "http://file.rdu.redhat.com/~cblum/vagrant-storage/packer_vb_RHCS1.3.0.box",
+    :LVBox => "http://file.rdu.redhat.com/~cblum/vagrant-storage/packer_lv_RHCS1.3.0.box"
+  },
+  "1.3.1" => {
+    :VBox => "http://file.rdu.redhat.com/~cblum/vagrant-storage/packer_vb_RHCS1.3.1.box",
+    :LVBox => "http://file.rdu.redhat.com/~cblum/vagrant-storage/packer_lv_RHCS1.3.1.box"
+  },
+  "1.3.2" => {
+    :VBox => "http://file.rdu.redhat.com/~cblum/vagrant-storage/packer_vb_RHCS1.3.2.box",
+    :LVBox => "http://file.rdu.redhat.com/~cblum/vagrant-storage/packer_lv_RHCS1.3.2.box"
+  },
+  "2.0.0" => {
+    :VBox => "http://file.rdu.redhat.com/~cblum/vagrant-storage/packer_vb_RHCS2.0.0.box",
+    :LVBox => "http://file.rdu.redhat.com/~cblum/vagrant-storage/packer_lv_RHCS2.0.0.box"
+  }
+}
 
-#VBOXURL = "http://file.rdu.redhat.com/~cblum/vagrant-storage/packer_vb_RHCS1.3.1.box"
-#LVBOXURL = "http://file.rdu.redhat.com/~cblum/vagrant-storage/packer_lv_RHCS1.3.1.box"
+vBoxURL = boxURL["default"][:VBox]
+lvBoxURL = boxURL["default"][:LVBox]
 
-# VBOXURL = "http://file.rdu.redhat.com/~cblum/vagrant-storage/packer_vb_RHCS1.3.2.box"
-# LVBOXURL = "http://file.rdu.redhat.com/~cblum/vagrant-storage/packer_lv_RHCS1.3.2.box"
-
-VBOXURL = "http://file.rdu.redhat.com/~cblum/vagrant-storage/packer_vb_RHCS2.0.0.box"
-LVBOXURL = "http://file.rdu.redhat.com/~cblum/vagrant-storage/packer_lv_RHCS2.0.0.box"
-
-numberOfVMs = 0
-numberOfDisks = -1
+numberOf = {
+  'OSDs' =>     { :value => -1, :min => 2, :max => 99, :default => 2 },
+  'disks' =>    { :value => -1, :min => 2, :max => 9,  :default => 2 },
+  'MONs' =>     { :value => -1, :min => 1, :max => 6,  :default => 1 },
+  'RGWs' =>     { :value => -1, :min => 0, :max => 9,  :default => 0 },
+  'MDSs' =>     { :value => -1, :min => 0, :max => 9,  :default => 0 },
+  'clients' =>  { :value => -1, :min => 0, :max => 19, :default => 0 }
+}
 
 #################
 # General VM settings applied to all VMs
 #################
-VMCPU = 2
-VMMEM = 1024
+SUBNET = "192.168.15."
 #################
 
 if ARGV[0] == "up"
-  environment = open('vagrant_env.conf', 'w')
   
-  print "\n\e[1;37mHow many OSD nodes do you want me to provision for you? Default: 2 \e[32m"
-  while numberOfVMs < 2 or numberOfVMs > 99
-    numberOfVMs = $stdin.gets.strip.to_i
-    if numberOfVMs == 0 # The user pressed enter without input or we cannot parse the input to a number
-      numberOfVMs = 2
-    elsif numberOfVMs < 2
-      print "\e[31mYou will need at least 2 ODS nodes for a healthy cluster ;) Try again \e[32m"
-    elsif numberOfVMs > 99
-      print "\e[31mWe don't support more than 99 VMs - Try again \e[32m"
+  while true
+    print "\n\e[1;37mWhich version of Ceph do you want to use? Default: 2.0.0 \e[32m"
+    print "\n\e[1;37mVersions available: \e[32m\n"
+    boxURL.each { |key, value|
+      puts ("  * " + key) if not key == "default"
+    }
+    answer = $stdin.gets.strip.to_s.downcase
+    if answer == ""
+      break
+    elsif boxURL.key?(answer)
+      vBoxURL = boxURL[answer][:VBox]
+      lvBoxURL = boxURL[answer][:LVBox]
+      break
+    else
+      puts "This version is not available! Please try again..."
     end
   end
 
-  print "\e[1;37mHow many disks do you need per OSD node? Default: 2 \e[32m"
-
-  while numberOfDisks < 1
-    numberOfDisks = $stdin.gets.strip.to_i
-    if numberOfDisks == 0 # The user pressed enter without input or we cannot parse the input to a number
-      numberOfDisks = 2
-    elsif numberOfDisks < 1
-      print "\e[31mWe need at least 1 disk ;) Try again \e[32m"
-    elsif numberOfDisks > 5
-      print "\e[31mWe don't support more than 5 disks - Try again \e[32m"
+  numberOf.each { |name, settings|
+    print "\n\e[1;37mHow many #{name} do you want me to provision for you? Default: #{settings[:default]} \e[32m"
+    while settings[:value] < settings[:min] or settings[:value] > settings[:max]
+      settings[:value] = $stdin.gets.strip.to_i
+      if settings[:value] == 0 # The user pressed enter without input or we cannot parse the input to a number
+        settings[:value] = settings[:default]
+      elsif settings[:value] < settings[:min]
+        print "\e[31mYou will need at least #{settings[:min]} #{name} for a healthy cluster ;) Try again \e[32m"
+      elsif settings[:value] > settings[:max]
+        print "\e[31mWe don't support more than #{settings[:max]} #{name} - Try again \e[32m"
+      end
     end
-  end
-
+  }
   while true
     print "\n\e[1;37mDo you want me to set the ceph cluster up? Default: yes \e[32m"
     answer = $stdin.gets.strip.to_s.downcase
@@ -70,41 +94,33 @@ if ARGV[0] == "up"
     end
   end
 
-
+  print "\e[32m\nOK I will provision:\n"
+  environment = open('vagrant_env.conf', 'w')
   environment.puts("# BEWARE: Do NOT modify ANY settings in here or your vagrant environment will be messed up")
-  environment.puts(numberOfVMs.to_s)
-  environment.puts(numberOfDisks.to_s)
+  numberOf.each { |name, settings|
+    environment.puts(settings[:value].to_s)
+    if name == 'disks'
+      print "  * #{settings[:value]} disks for OSD daemons in every OSD VM\n"
+    else
+      print "  * #{settings[:value]} #{name}\n"
+    end
+  }
+  print "\e[37m\n\n"
 
-  print "\e[32m\nOK I will provision 1 MON node and #{numberOfVMs} OSD nodes for you\nEach OSD node will have #{numberOfDisks} disks for OSD daemons\e[37m\n\n"
   system "sleep 1"
 else # So that we destroy and can connect to all VMs...
   environment = open('vagrant_env.conf', 'r')
 
-  environment.readline # Skip the comment on top
-  numberOfVMs = environment.readline.to_i
-  numberOfDisks = environment.readline.to_i
-
-  if ARGV[0] != "ssh-config"
-    puts "Detected settings from previous vagrant up:"
-    puts "  We deployed #{numberOfVMs} OSD nodes each with #{numberOfDisks} disks"
-    puts ""
-  end
+  environment.readline # Skip the comment in the first line
+  numberOf.each { |name, settings|
+    settings[:value] = environment.readline.to_i
+  }
 end
 
 environment.close
 
-# diskNames = ['sda', 'sdb', 'sdc', 'sdd', 'sde']
-diskNames = ['vda', 'vdb', 'vdc', 'vdd', 'vde']
 
-hostsFile = "192.168.15.200 MON\n"
-(1..numberOfVMs).each do |num|
-  hostsFile += "192.168.15.#{( 99 + num).to_s} OSD#{num.to_s}\n"
-end
 
-ansibleHostsFile = "[mons]\n  MON\n\n[osds]\n"
-(1..numberOfVMs).each do |num|
-  ansibleHostsFile += "  OSD#{num.to_s}\n"
-end
 
 def vBoxAttachDisks(numDisk, provider, boxName)
   for i in 1..numDisk.to_i
@@ -122,102 +138,84 @@ def lvAttachDisks(numDisk, provider)
   end
 end
 
-# Vagrant config section starts here
+cluster={}
+numberOf["OSDs"][:value].times       { |n| cluster["OSD#{n}"]    = { :ip => SUBNET + (n + 100).to_s, :cpus => 1, :mem => 1024, :type => "osds" } }
+numberOf["RGWs"][:value].times       { |n| cluster["RGW#{n}"]    = { :ip => SUBNET + (n + 10).to_s,  :cpus => 1, :mem => 1024, :type => "rgws" } }
+numberOf["MDSs"][:value].times       { |n| cluster["MDS#{n}"]    = { :ip => SUBNET + (n + 20).to_s,  :cpus => 1, :mem => 1024, :type => "mdss" } }
+numberOf["clients"][:value].times    { |n| cluster["Client#{n}"] = { :ip => SUBNET + (n + 30).to_s,  :cpus => 1, :mem => 1024, :type => "clients" } }
+numberOf["MONs"][:value].times       { |n| cluster["MON#{n}"]    = { :ip => SUBNET + (n + 2).to_s,   :cpus => 1, :mem => 1024, :type => "mons" } }
+
+hostsFile = ""
+cluster.each do |hostname, info|
+  hostsFile += "#{info[:ip]} #{hostname}\n"
+end
+
 Vagrant.configure(2) do |config|
-  (1..numberOfVMs).each do |vmNum|
-    config.vm.define "OSD#{vmNum.to_s}" do |copycat|
-      # This will be the private VM-only network where Ceph traffic will flow
-      copycat.vm.network "private_network", ip: ( "192.168.15." + (99 + vmNum).to_s ), model_type: "rtl8139"
-      copycat.vm.hostname = "OSD#{vmNum.to_s}"
 
-      copycat.vm.provider "virtualbox" do |vb, override|
-        override.vm.box = VBOXURL
+  # if Vagrant.has_plugin?("vagrant-cachier")
+  #   config.cache.scope = :machine
+  #   # config.cache.enable :apt
+  # end
 
-        # Don't display the VirtualBox GUI when booting the machine
-        vb.gui = false
-        vb.name = "OSD#{vmNum.to_s}-v1.3"
-      
-        # Customize the amount of memory and vCPU in the VM:
-        vb.memory = VMMEM
-        vb.cpus = VMCPU
+  cluster.each_with_index do |(hostname, info), index|
+    config.vm.define hostname do |cfg|
 
-        vBoxAttachDisks( numberOfDisks, vb, "OSD#{vmNum.to_s}" )
+      cfg.vm.network "private_network", ip: info[:ip]
+      cfg.vm.hostname = hostname
+
+      cfg.vm.provider "virtualbox" do |vb, override|
+        override.vm.box = vBoxURL
+        vb.name = hostname
+        vb.memory = info[:mem]
+        vb.cpus = info[:cpus]
+        vBoxAttachDisks( numberOf["disks"][:value], vb, hostname )
       end
 
-      copycat.vm.provider "libvirt" do |lv, override|
-        override.vm.box = LVBOXURL
-      
-        # Customize the amount of memory and vCPU in the VM:
-        lv.memory = VMMEM
-        lv.cpus = VMCPU
-
-        lvAttachDisks( numberOfDisks, lv )
+      cfg.vm.provider "libvirt" do |lv, override|
+        override.vm.box = lvBoxURL
+        override.vm.synced_folder '.', '/vagrant', type: 'rsync'
+        lv.memory = info[:mem]
+        lv.cpus = info[:cpus]
+        lvAttachDisks( numberOf["disks"][:value], lv )
       end
-      copycat.vm.post_up_message = "\e[37mBuilding of this VM is finished \nYou can access it now with: \nvagrant ssh OSD#{vmNum.to_s}\e[32m"
 
-    end
-  end
+      # provision nodes with ansible
+      if index == cluster.size - 1
 
+        cfg.vm.provision "shell", inline: <<-SHELL
+          set -x
+          cd /vagrant/ceph-ansible
+          echo '' > roles/ceph-common/tasks/pre_requisites/prerequisite_rh_storage_cdn_install.yml
+          cp ../ceph-ansible-fixes/activate_osds.yml roles/ceph-osd/tasks/
+          cp ../ceph-ansible-fixes/check_devices_auto.yml roles/ceph-osd/tasks/
+        SHELL
 
-  config.vm.define "MON" do |mainbox|
-    # This will be the private VM-only network where Ceph traffic will flow
-    mainbox.vm.network "private_network", ip: '192.168.15.200'
-    mainbox.vm.hostname = 'MON'
-    
-    mainbox.vm.provider "virtualbox" do |vb, override|
-      override.vm.box = VBOXURL
+        cfg.vm.provision :ansible_local do |ansible|
+          ansible.provisioning_path = '/vagrant/ceph-ansible/'
+          ansible.playbook = "/vagrant/ceph-ansible/site.yml.sample"
+          ansible.install = false
+          # ansible.sudo = true
+          # ansible.verbose = true
+          ansible.verbose = 'vvvv'
+          ansible.limit = 'all'
+          ansible.groups = {
+            'mons'         => (0...numberOf["MONs"][:value]).map    { |j| "MON#{j}" },
+            'osds'         => (0...numberOf["OSDs"][:value]).map    { |j| "OSD#{j}" },
+            'mdss'         => (0...numberOf["MDSs"][:value]).map    { |j| "MDS#{j}" },
+            'rgws'         => (0...numberOf["RGWs"][:value]).map    { |j| "RGW#{j}" },
+            'clients'      => (0...numberOf["clients"][:value]).map { |j| "Client#{j}" }
+          }
+          # Ugly but necessay: https://github.com/mitchellh/vagrant/issues/6726
+          ansible.raw_arguments = [
+            "--extra-vars",
+            "'osd_auto_discovery=true journal_collocation=true journal_size=1024 ceph_rhcs=true ceph_rhcs_version=2 ceph_rhcs_cdn_install=true cluster_network=\"#{SUBNET}0/24\" public_network=\"#{SUBNET}0/24\" monitor_address=\"#{cluster["MON0"][:ip]}\"'"
+          ]
+        end # end provision
+      end #end if
 
-      # Don't display the VirtualBox GUI when booting the machine
-      vb.gui = false
-      vb.name = "MON"
-    
-      # Customize the amount of memory and vCPU in the VM:
-      vb.memory = VMMEM
-      vb.cpus = VMCPU
+    end # end config
 
-      vBoxAttachDisks( numberOfDisks, vb, 'MON' )
-    end
-    
-    mainbox.vm.provider "libvirt" do |lv, override|
-      override.vm.box = LVBOXURL
-      override.vm.synced_folder '.', '/vagrant', type: 'rsync'
-    
-      # Customize the amount of memory and vCPU in the VM:
-      lv.memory = VMMEM
-      lv.cpus = VMCPU
-
-      lvAttachDisks( numberOfDisks, lv )
-    end
-
-    config.vm.provision "shell", inline: <<-SHELL
-      echo '#{ansibleHostsFile}' | sudo tee -a /etc/ansible/hosts
-    SHELL
-
-    command = 'sudo chmod +x /vagrant/deploy_ceph_with_ansible.sh;'
-    command += 'sudo /vagrant/deploy_ceph_with_ansible.sh;'
-
-    # If the user wishes no automatic deployment -> Forget the previous steps
-    if !provisionEnvironment
-      puts "#Skipping automated ceph deployment"
-      command = ''
-    end
-
-    mainbox.vm.provision "shell",
-      inline: command
-    
-    csshCmd = "vagrant ssh-config > ssh_conf; csshx --ssh_args '-F #{VAGRANT_ROOT}/ssh_conf' MON "
-    (1..numberOfVMs).each do |num|
-      csshCmd += "OSD#{num.to_s} "
-    end
-
-    mainbox.vm.post_up_message = "If you don't see any text below, it's because the text color is white ;)\n\e[37mBuilding of this VM is finished \nYou can access it now with: \nvagrant ssh MON\nI already connected the RHCS nodes with gluster peer probe for your convenience\n\n csshX Command line:\n#{csshCmd}\e[32m"
-
-  end
-
-
-  # Enable provisioning with a shell script. Additional provisioners such as
-  # Puppet, Chef, Ansible, Salt, and Docker are also available. Please see the
-  # documentation for more information about their specific syntax and use.
+  end #end cluster
 
   # The flow is outside->in so that this will run before all node specific Shell skripts mentioned above!
   config.vm.provision "shell", inline: <<-SHELL
@@ -225,6 +223,18 @@ Vagrant.configure(2) do |config|
     echo 'Host *' | sudo tee -a /root/.ssh/config
     echo ' StrictHostKeyChecking no' | sudo tee -a /root/.ssh/config
     echo ' UserKnownHostsFile=/dev/null' | sudo tee -a /root/.ssh/config
+    echo 'vagrant' | passwd --stdin vagrant
   SHELL
+
+  # Fix broken detection for ansible 2+ in vagrant 1.8.1 :(
+  # https://github.com/mitchellh/vagrant/issues/6793
+  config.vm.provision :shell, inline: <<-SCRIPT
+    GALAXY=/usr/local/bin/ansible-galaxy
+    echo '#!/usr/bin/env bash
+    /usr/bin/ansible-galaxy "$@"
+    exit 0
+    ' | sudo tee $GALAXY
+    sudo chmod 0755 $GALAXY
+  SCRIPT
 
 end
