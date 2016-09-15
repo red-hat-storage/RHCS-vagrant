@@ -5,46 +5,49 @@
     - name: Fix Red Hat DNS server
       lineinfile: dest=/etc/resolv.conf regexp=^nameserver line='nameserver 10.38.5.26'
 
-    - name: Prevent DNS lookup by SSH
-      lineinfile: dest=/etc/ssh/sshd_config regexp=^UseDNS line='UseDNS no'
-      notify:
-        - restart sshd
+    # - name: Prevent DNS lookup by SSH
+    #   lineinfile: dest=/etc/ssh/sshd_config regexp=^UseDNS line='UseDNS no'
+    #   notify:
+    #     - restart sshd
 
     - name: Add the RHSC-2.0-Agent repo to the machine
-      command: yum-config-manager --add http://download.eng.bos.redhat.com/rcm-guest/ceph-drops/auto/rhscon-2-rhel-7-compose/latest-RHSCON-2-RHEL-7/compose/Agent/x86_64/os/
+      command: yum-config-manager --add http://download-node-02.eng.bos.redhat.com/released/RHSCON/RHSCON-2/RHSCON-2.0-RHEL-7-20160818.0/compose/Agent/x86_64/os/
       args:
         creates: /etc/yum.repos.d/download.eng.bos.redhat.com_rcm-guest_ceph-drops_auto_rhscon-2-rhel-7-compose_latest-RHSCON-2-RHEL-7_compose_Agent_x86_64_os_.repo
 
     - name: Add the RHSC-2.0-Installer repo to the machine
-      command: yum-config-manager --add http://download.eng.bos.redhat.com/rcm-guest/ceph-drops/auto/rhscon-2-rhel-7-compose/latest-RHSCON-2-RHEL-7/compose/Installer/x86_64/os/
+      command: yum-config-manager --add http://download-node-02.eng.bos.redhat.com/released/RHSCON/RHSCON-2/RHSCON-2.0-RHEL-7-20160818.0/compose/Installer/x86_64/os/
       args:
         creates: /etc/yum.repos.d/download.eng.bos.redhat.com_rcm-guest_ceph-drops_auto_rhscon-2-rhel-7-compose_latest-RHSCON-2-RHEL-7_compose_Installer_x86_64_os_.repo
 
     - name: Add the RHSC-2.0-Main repo to the machine
-      command: yum-config-manager --add http://download.eng.bos.redhat.com/rcm-guest/ceph-drops/auto/rhscon-2-rhel-7-compose/latest-RHSCON-2-RHEL-7/compose/Main/x86_64/os/
+      command: yum-config-manager --add http://download-node-02.eng.bos.redhat.com/released/RHSCON/RHSCON-2/RHSCON-2.0-RHEL-7-20160818.0/compose/Main/x86_64/os/
       args:
         creates: /etc/yum.repos.d/download.eng.bos.redhat.com_rcm-guest_ceph-drops_auto_rhscon-2-rhel-7-compose_latest-RHSCON-2-RHEL-7_compose_Main_x86_64_os_.repo
 
-    - name: Add CEPH-2.0-MON repo
-      command: yum-config-manager --add http://download.eng.bos.redhat.com/rcm-guest/ceph-drops/auto/ceph-2-rhel-7-compose/latest-Ceph-2-RHEL-7/compose/MON/x86_64/os/
-      args:
-        creates: /etc/yum.repos.d/download.eng.bos.redhat.com_rcm-guest_ceph-drops_auto_ceph-2-rhel-7-compose_latest-Ceph-2-RHEL-7_compose_MON_x86_64_os_.repo
+    - name: Add RHCS gpg key
+      rpm_key: key=http://download.eng.bos.redhat.com/released/RHCeph/Ceph-2/2.0/Ceph-2.0-RHEL-7-20160818.0/compose/MON/x86_64/os/RPM-GPG-KEY-redhat-release
 
-    - name: Add CEPH-2.0-OSD repo
-      command: yum-config-manager --add http://download.eng.bos.redhat.com/rcm-guest/ceph-drops/auto/ceph-2-rhel-7-compose/latest-Ceph-2-RHEL-7/compose/OSD/x86_64/os/
+    - name: Add RHCS-MON Repo
+      command: yum-config-manager --add-repo http://download.eng.bos.redhat.com/released/RHCeph/Ceph-2/2.0/Ceph-2.0-RHEL-7-20160818.0/compose/MON/x86_64/os/
       args:
-        creates: /etc/yum.repos.d/download.eng.bos.redhat.com_rcm-guest_ceph-drops_auto_ceph-2-rhel-7-compose_latest-Ceph-2-RHEL-7_compose_OSD_x86_64_os_.repo
+        creates: /etc/yum.repos.d/download.eng.bos.redhat.com_released_RHCeph_Ceph-2_2.0_Ceph-2.0-RHEL-7-20160818.0_compose_MON_x86_64_os_.repo
 
-    - name: Add CEPH-2.0-Tools repo
-      command: yum-config-manager --add http://download.eng.bos.redhat.com/rcm-guest/ceph-drops/auto/ceph-2-rhel-7-compose/latest-Ceph-2-RHEL-7/compose/Tools/x86_64/os/
+    - name: Add RHCS-OSD Repo
+      command: yum-config-manager --add-repo http://download.eng.bos.redhat.com/released/RHCeph/Ceph-2/2.0/Ceph-2.0-RHEL-7-20160818.0/compose/OSD/x86_64/os/
       args:
-        creates: /etc/yum.repos.d/download.eng.bos.redhat.com_rcm-guest_ceph-drops_auto_ceph-2-rhel-7-compose_latest-Ceph-2-RHEL-7_compose_Tools_x86_64_os_.repo
+        creates: /etc/yum.repos.d/download.eng.bos.redhat.com_released_RHCeph_Ceph-2_2.0_Ceph-2.0-RHEL-7-20160818.0_compose_OSD_x86_64_os_.repo
+
+    - name: Add RHCS-Tools Repo
+      command: yum-config-manager --add-repo http://download.eng.bos.redhat.com/released/RHCeph/Ceph-2/2.0/Ceph-2.0-RHEL-7-20160818.0/compose/Tools/x86_64/os/
+      args:
+        creates: /etc/yum.repos.d/download.eng.bos.redhat.com_released_RHCeph_Ceph-2_2.0_Ceph-2.0-RHEL-7-20160818.0_compose_Tools_x86_64_os_.repo
 
     # - name: Install salt repo
     #   yum: name=https://repo.saltstack.com/yum/redhat/salt-repo-latest-1.el7.noarch.rpm disable_gpg_check=yes
 
-    - name: Disable gpgcheck in yum.conf globally
-      lineinfile: dest=/etc/yum.conf regexp=^gpgcheck= line=gpgcheck=0
+    # - name: Disable gpgcheck in yum.conf globally
+    #   lineinfile: dest=/etc/yum.conf regexp=^gpgcheck= line=gpgcheck=0
 
     - name: Prevent ansible from creating retry files
       lineinfile: dest=/etc/ansible/ansible.cfg regexp=#retry_files_enabled line='retry_files_enabled = False'
@@ -56,14 +59,14 @@
       shell: for i in `yum deplist ceph-installer | grep provider | grep -v ansible | awk -e '{print $2}'`; do yum install -y $i; done
 
     - name: Get latest ceph-installer rpm package
-      shell: wget $(yum list ceph-installer | grep ceph-installer | sed 's/.noarch//' | awk -e '{print "http://download.eng.bos.redhat.com/rcm-guest/ceph-drops/auto/rhscon-2-rhel-7-compose/latest-RHSCON-2-RHEL-7/compose/Installer/x86_64/os/Packages/" $1 "-" $2 ".noarch.rpm"}')  -O /tmp/ceph-installer.rpm
+      shell: wget $(yum list ceph-installer | grep ceph-installer | sed 's/.noarch//' | awk -e '{print "http://download-node-02.eng.bos.redhat.com/released/RHSCON/RHSCON-2/RHSCON-2.0-RHEL-7-20160818.0/compose/Installer/x86_64/os/Packages/" $1 "-" $2 ".noarch.rpm"}')  -O /tmp/ceph-installer.rpm
 
     - name: Cheat the system and install ceph-installer with newer ansible (ignoring all dependencies)
       command: rpm -Uvh --nodeps /tmp/ceph-installer.rpm
       ignore_errors: yes # will error mostly due to the fact that the thing is already installed...
 
     - name: Get latest ceph-ansible rpm package
-      shell: wget $(yum list ceph-ansible | grep ceph-ansible | sed 's/.noarch//' | awk -e '{print "http://download.eng.bos.redhat.com/rcm-guest/ceph-drops/auto/rhscon-2-rhel-7-compose/latest-RHSCON-2-RHEL-7/compose/Installer/x86_64/os/Packages/" $1 "-" $2 ".noarch.rpm"}')  -O /tmp/ceph-ansible.rpm
+      shell: wget $(yum list ceph-ansible | grep ceph-ansible | sed 's/.noarch//' | awk -e '{print "http://download-node-02.eng.bos.redhat.com/released/RHSCON/RHSCON-2/RHSCON-2.0-RHEL-7-20160818.0/compose/Installer/x86_64/os/Packages/" $1 "-" $2 ".noarch.rpm"}')  -O /tmp/ceph-ansible.rpm
 
     - name: Cheat the system and install ceph-ansible with newer ansible (ignoring all dependencies)
       command: rpm -Uvh --nodeps /tmp/ceph-ansible.rpm
