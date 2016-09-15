@@ -83,9 +83,9 @@ environment.close
 # diskNames = ['sda', 'sdb', 'sdc', 'sdd', 'sde']
 diskNames = ['vda', 'vdb', 'vdc', 'vdd', 'vde']
 
-hostsFile = "192.168.15.200 RHS-C RHSC\n"
+hostsFile = "192.168.33.200 RHS-C RHSC\n"
 (1..numberOfVMs).each do |num|
-  hostsFile += "192.168.15.#{( 99 + num).to_s} rhcs#{num.to_s}\n"
+  hostsFile += "192.168.33.#{( 99 + num).to_s} rhcs#{num.to_s}\n"
 end
 
 ansibleHostsFile = "[rhsc]\n  RHSC\n\n[ceph]\n"
@@ -115,7 +115,7 @@ Vagrant.configure(2) do |config|
   (1..numberOfVMs).each do |vmNum|
     config.vm.define "rhcs#{vmNum.to_s}" do |copycat|
       # This will be the private VM-only network where Ceph traffic will flow
-      copycat.vm.network "private_network", ip: ( "192.168.15." + (99 + vmNum).to_s ), model_type: "rtl8139"
+      copycat.vm.network "private_network", ip: ( "192.168.33." + (99 + vmNum).to_s ), model_type: "rtl8139"
       copycat.vm.hostname = "rhcs#{vmNum.to_s}"
 
       copycat.vm.provider "virtualbox" do |vb, override|
@@ -157,7 +157,7 @@ Vagrant.configure(2) do |config|
 
   config.vm.define "RHS-C" do |mainbox|
     # This will be the private VM-only network where Ceph traffic will flow
-    mainbox.vm.network "private_network", ip: '192.168.15.200'
+    mainbox.vm.network "private_network", ip: '192.168.33.200'
     # Port forward for Web interface (HTTP)
     mainbox.vm.network "forwarded_port", guest: 8080, host: 8080, host_ip: '*'
     # Port forward for Web interface (HTTPS)
