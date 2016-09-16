@@ -208,7 +208,7 @@ Vagrant.configure(2) do |config|
           # Ugly but necessay: https://github.com/mitchellh/vagrant/issues/6726
           ansible.raw_arguments = [
             "--extra-vars",
-            "'osd_auto_discovery=true journal_collocation=true journal_size=1024 ceph_rhcs=true ceph_rhcs_version=2 ceph_rhcs_cdn_install=true cluster_network=\"#{SUBNET}0/24\" public_network=\"#{SUBNET}0/24\" monitor_address=\"#{cluster["MON0"][:ip]}\"'"
+            "'osd_auto_discovery=true journal_collocation=true journal_size=1024 ceph_rhcs=true ceph_rhcs_version=2 ceph_rhcs_cdn_install=true cluster_network=\"#{SUBNET}0/24\" public_network=\"#{SUBNET}0/24\" monitor_interface=\"eth1\"'"
           ]
         end # end provision
       end #end if
