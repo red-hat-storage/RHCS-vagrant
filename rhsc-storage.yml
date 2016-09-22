@@ -90,6 +90,12 @@
       command: bash -c "curl http://RHS-C:8181/setup/agent/ | bash"
       register: install_code
 
+    - name: Fix has no attribute issue in secure_cluster
+      get_url:
+        url: https://raw.githubusercontent.com/ceph/ceph-ansible/c127df7981e86f9e4b499c4de0d20835fb072652/roles/ceph-mon/tasks/secure_cluster.yml
+        dest: /usr/share/ceph-ansible/roles/ceph-mon/tasks/secure_cluster.yml
+        force: yes
+
   handlers:
     - name: restart sshd
       service: name=sshd state=restarted

@@ -120,6 +120,12 @@
 
     - template: src=/vagrant/ansible-rhsc-pre-requirements.yml dest=/usr/share/ceph-ansible/roles/ceph-agent/tasks/pre_requisite.yml owner=root group=root mode=0644
 
+    - name: Fix has no attribute issue in secure_cluster
+      get_url:
+        url: https://raw.githubusercontent.com/ceph/ceph-ansible/c127df7981e86f9e4b499c4de0d20835fb072652/roles/ceph-mon/tasks/secure_cluster.yml
+        dest: /usr/share/ceph-ansible/roles/ceph-mon/tasks/secure_cluster.yml
+        force: yes
+
     # - name: Fix dashboard collectd issues BZ 1339979
     #   replace: dest=/srv/salt/collectd/files/collectd.conf regexp='fqdn' replace='id'
 
