@@ -204,7 +204,7 @@ Vagrant.configure(2) do |config|
       csshCmd += "rhcs#{num.to_s} "
     end
 
-    mainbox.vm.post_up_message = "If you don't see any text below, it's because the text color is white ;)\n\e[37mBuilding of this VM is finished \nYou can access it now with: \nvagrant ssh RHS-C\nI already connected the RHCS nodes with gluster peer probe for your convenience\n\n csshX Command line:\n#{csshCmd}\e[32m"
+    mainbox.vm.post_up_message = "If you don't see any text below, it's because the text color is white ;)\n\e[37mBuilding of this VM is finished \nYou can access it now with: \nvagrant ssh RHS-C\n\n csshX Command line:\n#{csshCmd}\e[32m"
 
   end
 
