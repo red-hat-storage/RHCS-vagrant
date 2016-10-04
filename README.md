@@ -59,7 +59,9 @@ Source: <http://demobuilder.gps.hst.ams2.redhat.com/> From Jim Minter's Demo Bui
 
 ## Get started
 * Clone this repository
- * `git clone git@github.com:red-hat-storage/RHCS-vagrant.git`
+ * `git clone https://github.com/red-hat-storage/RHCS-vagrant.git`
+* cd into the new directory
+ * `cd RHCS-vagrant`
 * switch into this branch
  *  `git checkout RHSC`
 * Run `vagrant up --no-provision`
