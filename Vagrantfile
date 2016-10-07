@@ -173,7 +173,7 @@ Vagrant.configure(2) do |config|
 
       cfg.vm.provider "libvirt" do |lv, override|
         override.vm.box = lvBoxURL
-        override.vm.synced_folder '.', '/vagrant', type: 'rsync'
+        override.vm.synced_folder '.', '/vagrant', type: 'rsync', rsync__args: ["--verbose", "--archive", "--delete"]
         lv.memory = info[:mem]
         lv.cpus = info[:cpus]
         lvAttachDisks( numberOf["disks"][:value], lv )
