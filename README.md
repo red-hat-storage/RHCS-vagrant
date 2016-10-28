@@ -71,8 +71,8 @@ Source: <http://demobuilder.gps.hst.ams2.redhat.com/> From Jim Minter's Demo Bui
 * First provision the USM node:
  * `vagrant provision RHS-C`
 * Then provision your storage nodes:
- * `vagrant provision RHCS1 RHCS2 RHCS3 [...]` (Depending on how many storage nodes you have started)
-* Connect to <http://localhost:10443>
+ * `vagrant provision rhcs1 rhcs2 rhcs3 [...]` (Depending on how many storage nodes you have started)
+* Connect to <https://localhost:10443>
  * Username: admin / Password: admin 
 
 
