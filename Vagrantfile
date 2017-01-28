@@ -25,6 +25,10 @@ boxURL = {
     :VBox => "http://file.rdu.redhat.com/~cblum/vagrant-storage/packer_vb_RHCS1.3.2.box",
     :LVBox => "http://file.rdu.redhat.com/~cblum/vagrant-storage/packer_lv_RHCS1.3.2.box"
   },
+  "1.3.3" => {
+    :VBox => "http://file.rdu.redhat.com/~cblum/vagrant-storage/packer_vb_RHCS1.3.3.box",
+    :LVBox => "http://file.rdu.redhat.com/~cblum/vagrant-storage/packer_lv_RHCS1.3.3.box"
+  },
   "2.0.0" => {
     :VBox => "http://file.rdu.redhat.com/~cblum/vagrant-storage/packer_vb_RHCS2.0.0.box",
     :LVBox => "http://file.rdu.redhat.com/~cblum/vagrant-storage/packer_lv_RHCS2.0.0.box"
@@ -180,7 +184,7 @@ Vagrant.configure(2) do |config|
       end
 
       # provision nodes with ansible
-      if index == cluster.size - 1
+      if index == cluster.size - 1 and provisionEnvironment
 
         cfg.vm.provision "shell", inline: <<-SHELL
           set -x
