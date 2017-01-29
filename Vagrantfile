@@ -184,7 +184,7 @@ Vagrant.configure(2) do |config|
       end
 
       # provision nodes with ansible
-      if index == cluster.size - 1 and provisionEnvironment
+      if index == cluster.size - 1 and ( provisionEnvironment or ARGV[0] == "provision" )
 
         cfg.vm.provision "shell", inline: <<-SHELL
           set -x
@@ -228,6 +228,7 @@ Vagrant.configure(2) do |config|
     echo ' StrictHostKeyChecking no' | sudo tee -a /root/.ssh/config
     echo ' UserKnownHostsFile=/dev/null' | sudo tee -a /root/.ssh/config
     echo 'vagrant' | passwd --stdin vagrant
+    ifdown eth1; ifup eth1 # Hotfix weird ip address glitch in libvirt
   SHELL
 
   # Fix broken detection for ansible 2+ in vagrant 1.8.1 :(
