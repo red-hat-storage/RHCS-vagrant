@@ -109,12 +109,19 @@ if ARGV[0] == "up"
 
   system "sleep 1"
 else # So that we destroy and can connect to all VMs...
-  environment = open('vagrant_env.conf', 'r')
-
-  environment.readline # Skip the comment in the first line
-  numberOf.each { |name, settings|
-    settings[:value] = environment.readline.to_i
-  }
+  begin
+    environment = open('vagrant_env.conf', 'r')
+    environment.readline # Skip the comment in the first line
+    numberOf.each { |name, settings|
+      settings[:value] = environment.readline.to_i
+    }
+  rescue
+    numberOf.each { |name, settings|
+      settings[:value] = settings[:default]
+    }
+    print "\e[31m\nWARNING! Couldn't find file vagrant_env.conf! I will assume you have provisioned the default number of VMs\e[37m\n\n"
+  end
+  
 end
 
 environment.close
