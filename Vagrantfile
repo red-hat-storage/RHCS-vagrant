@@ -5,23 +5,16 @@
 VAGRANT_ROOT = File.dirname(File.expand_path(__FILE__))
 
 #################
-# Available RHCS base images (1.3.0, 1.3.1, 1.3.2, 2.0.0)
+# Set RHCS version
+RHGS_VERSION = "RHCS2.0.0"
+
+# Currently available versions:
+# RHCS1.3.0
+# RHCS1.3.1
+# RHCS1.3.2
+# RHCS1.3.3
+# RHCS2.0.0
 #################
-
-#VBOXURL = "http://file.rdu.redhat.com/~cblum/vagrant-storage/packer_vb_RHCS1.3.0.box"
-#LVBOXURL = "http://file.rdu.redhat.com/~cblum/vagrant-storage/packer_lv_RHCS1.3.0.box"
-
-#VBOXURL = "http://file.rdu.redhat.com/~cblum/vagrant-storage/packer_vb_RHCS1.3.1.box"
-#LVBOXURL = "http://file.rdu.redhat.com/~cblum/vagrant-storage/packer_lv_RHCS1.3.1.box"
-
-#VBOXURL = "http://file.rdu.redhat.com/~cblum/vagrant-storage/packer_vb_RHCS1.3.2.box"
-#LVBOXURL = "http://file.rdu.redhat.com/~cblum/vagrant-storage/packer_lv_RHCS1.3.2.box"
-
-VBOXURL = "http://file.rdu.redhat.com/~cblum/vagrant-storage/packer_vb_RHCS2.0.0.box"
-LVBOXURL = "http://file.rdu.redhat.com/~cblum/vagrant-storage/packer_lv_RHCS2.0.0.box"
-
-numberOfVMs = 0
-numberOfDisks = -1
 
 #################
 # General VM settings applied to all VMs
@@ -30,8 +23,12 @@ VMCPU = 2
 VMMEM = 1500
 #################
 
+
+
+numberOfVMs = 0
+numberOfDisks = -1
+
 if ARGV[0] == "up"
-  environment = open('vagrant_env.conf', 'w')
   
   print "\n\e[1;37mHow many storage nodes do you want me to provision for you? Default: 2 \e[32m"
   while numberOfVMs < 2 or numberOfVMs > 99
@@ -58,18 +55,27 @@ if ARGV[0] == "up"
     end
   end
 
+  environment = open('vagrant_env.conf', 'w')
   environment.puts("# BEWARE: Do NOT modify ANY settings in here or your vagrant environment will be messed up")
   environment.puts(numberOfVMs.to_s)
   environment.puts(numberOfDisks.to_s)
+  environment.close
 
   print "\e[32m\nOK I will provision 1 RHS-C node and #{numberOfVMs} storage nodes for you\nEach storage node will have #{numberOfDisks} disks for ceph\e[37m\n\n"
   system "sleep 1"
 else # So that we destroy and can connect to all VMs...
-  environment = open('vagrant_env.conf', 'r')
+  begin
+    environment = open('vagrant_env.conf', 'r')
+    environment.readline # Skip the comment on top
+    numberOfVMs = environment.readline.to_i
+    numberOfDisks = environment.readline.to_i
+    environment.close
+  rescue
+    numberOfVMs = 2
+    numberOfDisks = 2
+    print "\e[31m\nWARNING! Couldn't find file vagrant_env.conf! I will assume you have provisioned #{numberOfVMs} VMs\e[37m\n\n"
+  end
 
-  environment.readline # Skip the comment on top
-  numberOfVMs = environment.readline.to_i
-  numberOfDisks = environment.readline.to_i
 
   if ARGV[0] != "ssh-config"
     puts "Detected settings from previous vagrant up:"
@@ -78,7 +84,6 @@ else # So that we destroy and can connect to all VMs...
   end
 end
 
-environment.close
 
 # diskNames = ['sda', 'sdb', 'sdc', 'sdd', 'sde']
 diskNames = ['vda', 'vdb', 'vdc', 'vdd', 'vde']
@@ -111,6 +116,7 @@ end
 
 # Vagrant config section starts here
 Vagrant.configure(2) do |config|
+  config.vm.box_url = "http://file.rdu.redhat.com/~cblum/vagrant-storage/#{RHCS_VERSION}.json"
 
   (1..numberOfVMs).each do |vmNum|
     config.vm.define "rhcs#{vmNum.to_s}" do |copycat|
@@ -119,7 +125,7 @@ Vagrant.configure(2) do |config|
       copycat.vm.hostname = "rhcs#{vmNum.to_s}"
 
       copycat.vm.provider "virtualbox" do |vb, override|
-        override.vm.box = VBOXURL
+        override.vm.box = RHCS_VERSION
 
         # Don't display the VirtualBox GUI when booting the machine
         vb.gui = false
@@ -133,7 +139,7 @@ Vagrant.configure(2) do |config|
       end
 
       copycat.vm.provider "libvirt" do |lv, override|
-        override.vm.box = LVBOXURL
+        override.vm.box = RHCS_VERSION
         override.vm.synced_folder '.', '/vagrant', type: 'rsync'
       
         # Customize the amount of memory and vCPU in the VM:
@@ -168,7 +174,7 @@ Vagrant.configure(2) do |config|
     mainbox.vm.hostname = 'RHS-C'
     
     mainbox.vm.provider "virtualbox" do |vb, override|
-      override.vm.box = VBOXURL
+      override.vm.box = RHCS_VERSION
 
       # Don't display the VirtualBox GUI when booting the machine
       vb.gui = false
@@ -182,7 +188,7 @@ Vagrant.configure(2) do |config|
     end
     
     mainbox.vm.provider "libvirt" do |lv, override|
-      override.vm.box = LVBOXURL
+      override.vm.box = RHCS_VERSION
       override.vm.synced_folder '.', '/vagrant', type: 'rsync'
     
       # Customize the amount of memory and vCPU in the VM:
