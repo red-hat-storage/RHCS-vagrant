@@ -30,13 +30,13 @@ numberOfDisks = -1
 
 if ARGV[0] == "up"
   
-  print "\n\e[1;37mHow many storage nodes do you want me to provision for you? Default: 2 \e[32m"
+  print "\n\e[1;37mHow many storage nodes do you want me to provision for you? Default: 4 \e[32m"
   while numberOfVMs < 2 or numberOfVMs > 99
     numberOfVMs = $stdin.gets.strip.to_i
     if numberOfVMs == 0 # The user pressed enter without input or we cannot parse the input to a number
       numberOfVMs = 2
-    elsif numberOfVMs < 2
-      print "\e[31mYou will need at least 2 ODS nodes for a healthy cluster ;) Try again \e[32m"
+    elsif numberOfVMs < 4
+      print "\e[31mYou will need at least 3 MONs and one OSD nodes for a healthy cluster ;) Try again \e[32m"
     elsif numberOfVMs > 99
       print "\e[31mWe don't support more than 99 VMs - Try again \e[32m"
     end
