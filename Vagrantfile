@@ -105,12 +105,19 @@ if ARGV[0] == "up"
 
   system "sleep 1"
 else # So that we destroy and can connect to all VMs...
-  environment = open('vagrant_env.conf', 'r')
+  begin
+    environment = open('vagrant_env.conf', 'r')
 
-  environment.readline # Skip the comment in the first line
-  numberOf.each { |name, settings|
-    settings[:value] = environment.readline.to_i
-  }
+    environment.readline # Skip the comment in the first line
+    numberOf.each { |name, settings|
+      settings[:value] = environment.readline.to_i
+    }    
+  rescue
+    numberOf.each { |name, settings|
+      settings[:value] = settings[:default]
+    }
+  end
+
 end
 
 environment.close
