@@ -6,7 +6,7 @@ VAGRANT_ROOT = File.dirname(File.expand_path(__FILE__))
 
 #################
 # Set RHCS version
-RHGS_VERSION = "RHCS2.0.0"
+RHCS_VERSION = "RHCS2.0.0"
 
 # Currently available versions:
 # RHCS1.3.0
