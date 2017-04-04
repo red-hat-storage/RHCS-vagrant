@@ -10,33 +10,26 @@ VAGRANT_ROOT = File.dirname(File.expand_path(__FILE__))
 
 boxURL = {
   "default" => {
-    :VBox => "http://file.rdu.redhat.com/~cblum/vagrant-storage/packer_vb_RHCS2.0.0.box",
-    :LVBox => "http://file.rdu.redhat.com/~cblum/vagrant-storage/packer_lv_RHCS2.0.0.box"
+    :name => "RHCS2.0.0"
   },
   "1.3.0" => {
-    :VBox => "http://file.rdu.redhat.com/~cblum/vagrant-storage/packer_vb_RHCS1.3.0.box",
-    :LVBox => "http://file.rdu.redhat.com/~cblum/vagrant-storage/packer_lv_RHCS1.3.0.box"
+    :name => "RHCS1.3.0"
   },
   "1.3.1" => {
-    :VBox => "http://file.rdu.redhat.com/~cblum/vagrant-storage/packer_vb_RHCS1.3.1.box",
-    :LVBox => "http://file.rdu.redhat.com/~cblum/vagrant-storage/packer_lv_RHCS1.3.1.box"
+    :name => "RHCS1.3.1"
   },
   "1.3.2" => {
-    :VBox => "http://file.rdu.redhat.com/~cblum/vagrant-storage/packer_vb_RHCS1.3.2.box",
-    :LVBox => "http://file.rdu.redhat.com/~cblum/vagrant-storage/packer_lv_RHCS1.3.2.box"
+    :name => "RHCS1.3.2"
   },
   "1.3.3" => {
-    :VBox => "http://file.rdu.redhat.com/~cblum/vagrant-storage/packer_vb_RHCS1.3.3.box",
-    :LVBox => "http://file.rdu.redhat.com/~cblum/vagrant-storage/packer_lv_RHCS1.3.3.box"
+    :name => "RHCS1.3.3"
   },
   "2.0.0" => {
-    :VBox => "http://file.rdu.redhat.com/~cblum/vagrant-storage/packer_vb_RHCS2.0.0.box",
-    :LVBox => "http://file.rdu.redhat.com/~cblum/vagrant-storage/packer_lv_RHCS2.0.0.box"
+    :name => "RHCS2.0.0"
   }
 }
 
-vBoxURL = boxURL["default"][:VBox]
-lvBoxURL = boxURL["default"][:LVBox]
+RHCS_VERSION = boxURL["default"][:name]
 
 numberOf = {
   'OSDs' =>     { :value => -1, :min => 2, :max => 99, :default => 2 },
@@ -65,8 +58,7 @@ if ARGV[0] == "up"
     if answer == ""
       break
     elsif boxURL.key?(answer)
-      vBoxURL = boxURL[answer][:VBox]
-      lvBoxURL = boxURL[answer][:LVBox]
+      RHCS_VERSION = boxURL[answer][:name]
       break
     else
       puts "This version is not available! Please try again..."
@@ -160,6 +152,7 @@ Vagrant.configure(2) do |config|
   #   config.cache.scope = :machine
   #   # config.cache.enable :apt
   # end
+  config.vm.box_url = "http://file.rdu.redhat.com/~cblum/vagrant-storage/#{RHCS_VERSION}.json"
 
   cluster.each_with_index do |(hostname, info), index|
     config.vm.define hostname do |cfg|
@@ -168,7 +161,7 @@ Vagrant.configure(2) do |config|
       cfg.vm.hostname = hostname
 
       cfg.vm.provider "virtualbox" do |vb, override|
-        override.vm.box = vBoxURL
+        override.vm.box = RHCS_VERSION
         vb.name = hostname
         vb.memory = info[:mem]
         vb.cpus = info[:cpus]
@@ -176,7 +169,7 @@ Vagrant.configure(2) do |config|
       end
 
       cfg.vm.provider "libvirt" do |lv, override|
-        override.vm.box = lvBoxURL
+        override.vm.box = RHCS_VERSION
         override.vm.synced_folder '.', '/vagrant', type: 'rsync', rsync__args: ["--verbose", "--archive", "--delete"]
         lv.memory = info[:mem]
         lv.cpus = info[:cpus]
