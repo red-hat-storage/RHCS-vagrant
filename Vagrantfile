@@ -29,7 +29,7 @@ numberOfVMs = 0
 numberOfDisks = -1
 
 if ARGV[0] == "up"
-  
+
   print "\n\e[1;37mHow many storage nodes do you want me to provision for you? Default: 4 \e[32m"
   while numberOfVMs < 2 or numberOfVMs > 99
     numberOfVMs = $stdin.gets.strip.to_i
@@ -118,6 +118,59 @@ end
 Vagrant.configure(2) do |config|
   config.vm.box_url = "http://file.rdu.redhat.com/~cblum/vagrant-storage/#{RHCS_VERSION}.json"
 
+  config.vm.define "RHS-C" do |mainbox|
+    # This will be the private VM-only network where Ceph traffic will flow
+    mainbox.vm.network "private_network", ip: '192.168.33.200'
+    # Port forward for Web interface (HTTP)
+    mainbox.vm.network "forwarded_port", guest: 8080, host: 8080, host_ip: '*'
+    # Port forward for Web interface (HTTPS)
+    mainbox.vm.network "forwarded_port", guest: 10443, host: 10443, host_ip: '*'
+    # # Port forward for Rest API
+    # mainbox.vm.network "forwarded_port", guest: 8181, host: 8181
+    # mainbox.vm.network "forwarded_port", guest: 8081, host: 8081
+    mainbox.vm.hostname = 'RHS-C'
+
+    mainbox.vm.provider "virtualbox" do |vb, override|
+      override.vm.box = RHCS_VERSION
+
+      # Don't display the VirtualBox GUI when booting the machine
+      vb.gui = false
+      vb.name = "RHS-C"
+
+      # Customize the amount of memory and vCPU in the VM:
+      vb.memory = 2500
+      vb.cpus = VMCPU
+
+      vBoxAttachDisks( numberOfDisks, vb, 'RHS-C' )
+    end
+
+    mainbox.vm.provider "libvirt" do |lv, override|
+      override.vm.box = RHCS_VERSION
+      override.vm.synced_folder '.', '/vagrant', type: 'rsync'
+
+      # Customize the amount of memory and vCPU in the VM:
+      lv.memory = 2500
+      lv.cpus = VMCPU
+
+      lvAttachDisks( numberOfDisks, lv )
+    end
+
+    mainbox.vm.provision "ansible_local" do |ansible|
+      ansible.playbook = "rhsc-controller.yml"
+      ansible.install = false
+      ansible.verbose = true
+      # ansible.verbose = 'vvvv'
+    end
+
+    csshCmd = "vagrant ssh-config > ssh_conf; csshx --ssh_args '-F #{VAGRANT_ROOT}/ssh_conf' RHS-C "
+    (1..numberOfVMs).each do |num|
+      csshCmd += "rhcs#{num.to_s} "
+    end
+
+    mainbox.vm.post_up_message = "If you don't see any text below, it's because the text color is white ;)\n\e[37mBuilding of this VM is finished \nYou can access it now with: \nvagrant ssh RHS-C\n\n csshX Command line:\n#{csshCmd}\e[32m"
+
+  end
+
   (1..numberOfVMs).each do |vmNum|
     config.vm.define "rhcs#{vmNum.to_s}" do |copycat|
       # This will be the private VM-only network where Ceph traffic will flow
@@ -130,7 +183,7 @@ Vagrant.configure(2) do |config|
         # Don't display the VirtualBox GUI when booting the machine
         vb.gui = false
         vb.name = "rhcs#{vmNum.to_s}-v2.0"
-      
+
         # Customize the amount of memory and vCPU in the VM:
         vb.memory = VMMEM
         vb.cpus = VMCPU
@@ -141,7 +194,7 @@ Vagrant.configure(2) do |config|
       copycat.vm.provider "libvirt" do |lv, override|
         override.vm.box = RHCS_VERSION
         override.vm.synced_folder '.', '/vagrant', type: 'rsync'
-      
+
         # Customize the amount of memory and vCPU in the VM:
         lv.memory = VMMEM
         lv.cpus = VMCPU
@@ -159,61 +212,6 @@ Vagrant.configure(2) do |config|
 
     end
   end
-  
-
-  config.vm.define "RHS-C" do |mainbox|
-    # This will be the private VM-only network where Ceph traffic will flow
-    mainbox.vm.network "private_network", ip: '192.168.33.200'
-    # Port forward for Web interface (HTTP)
-    mainbox.vm.network "forwarded_port", guest: 8080, host: 8080, host_ip: '*'
-    # Port forward for Web interface (HTTPS)
-    mainbox.vm.network "forwarded_port", guest: 10443, host: 10443, host_ip: '*'
-    # # Port forward for Rest API
-    # mainbox.vm.network "forwarded_port", guest: 8181, host: 8181
-    # mainbox.vm.network "forwarded_port", guest: 8081, host: 8081
-    mainbox.vm.hostname = 'RHS-C'
-    
-    mainbox.vm.provider "virtualbox" do |vb, override|
-      override.vm.box = RHCS_VERSION
-
-      # Don't display the VirtualBox GUI when booting the machine
-      vb.gui = false
-      vb.name = "RHS-C"
-    
-      # Customize the amount of memory and vCPU in the VM:
-      vb.memory = 2500
-      vb.cpus = VMCPU
-
-      vBoxAttachDisks( numberOfDisks, vb, 'RHS-C' )
-    end
-    
-    mainbox.vm.provider "libvirt" do |lv, override|
-      override.vm.box = RHCS_VERSION
-      override.vm.synced_folder '.', '/vagrant', type: 'rsync'
-    
-      # Customize the amount of memory and vCPU in the VM:
-      lv.memory = 2500
-      lv.cpus = VMCPU
-
-      lvAttachDisks( numberOfDisks, lv )
-    end
-
-    mainbox.vm.provision "ansible_local" do |ansible|
-      ansible.playbook = "rhsc-controller.yml"
-      ansible.install = false
-      ansible.verbose = true
-      # ansible.verbose = 'vvvv'
-    end
-    
-    csshCmd = "vagrant ssh-config > ssh_conf; csshx --ssh_args '-F #{VAGRANT_ROOT}/ssh_conf' RHS-C "
-    (1..numberOfVMs).each do |num|
-      csshCmd += "rhcs#{num.to_s} "
-    end
-
-    mainbox.vm.post_up_message = "If you don't see any text below, it's because the text color is white ;)\n\e[37mBuilding of this VM is finished \nYou can access it now with: \nvagrant ssh RHS-C\n\n csshX Command line:\n#{csshCmd}\e[32m"
-
-  end
-
 
   # Enable provisioning with a shell script. Additional provisioners such as
   # Puppet, Chef, Ansible, Salt, and Docker are also available. Please see the
