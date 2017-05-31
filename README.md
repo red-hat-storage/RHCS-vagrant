@@ -59,7 +59,7 @@ Source: <http://demobuilder.gps.hst.ams2.redhat.com/> From Jim Minter's Demo Bui
 
 ## Get started
 * Clone this repository
- * `git clone git@github.com:red-hat-storage/RHCS-vagrant.git`
+ * `git clone https://github.com/red-hat-storage/RHCS-vagrant.git`
 * Init git submodules `git submodule init ceph-ansible && git submodule update ceph-ansible`
 * Run `vagrant up`
 	* If you have multiple virtualisation programs installed, you might need to explicitely select one like this: `vagrant up --provider=libvirt`    
