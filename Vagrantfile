@@ -10,7 +10,7 @@ VAGRANT_ROOT = File.dirname(File.expand_path(__FILE__))
 
 boxURL = {
   "default" => {
-    :name => "RHCS2.0.0"
+    :name => "RHCS2.2.0"
   },
   "1.3.0" => {
     :name => "RHCS1.3.0"
@@ -52,7 +52,7 @@ SUBNET = "192.168.15."
 if ARGV[0] == "up"
   
   while true
-    print "\n\e[1;37mWhich version of Ceph do you want to use? Default: 2.0.0 \e[32m"
+    print "\n\e[1;37mWhich version of Ceph do you want to use? Default: 2.2.0 \e[32m"
     print "\n\e[1;37mVersions available: \e[32m\n"
     boxURL.each { |key, value|
       puts ("  * " + key) if not key == "default"
