@@ -186,14 +186,6 @@ Vagrant.configure(2) do |config|
       # provision nodes with ansible
       if index == cluster.size - 1 and ( provisionEnvironment or ARGV[0] == "provision" )
 
-        cfg.vm.provision "shell", inline: <<-SHELL
-          set -x
-          cd /vagrant/ceph-ansible
-          echo '' > roles/ceph-common/tasks/pre_requisites/prerequisite_rh_storage_cdn_install.yml
-          cp ../ceph-ansible-fixes/activate_osds.yml roles/ceph-osd/tasks/
-          cp ../ceph-ansible-fixes/check_devices_auto.yml roles/ceph-osd/tasks/
-        SHELL
-
         cfg.vm.provision :ansible_local do |ansible|
           ansible.provisioning_path = '/vagrant/ceph-ansible/'
           ansible.playbook = "/vagrant/ceph-ansible/site.yml.sample"
@@ -211,6 +203,8 @@ Vagrant.configure(2) do |config|
           }
           # Ugly but necessay: https://github.com/mitchellh/vagrant/issues/6726
           ansible.raw_arguments = [
+            "--skip-tags",
+            "'package-install'",
             "--extra-vars",
             "'osd_auto_discovery=true journal_collocation=true journal_size=1024 ceph_rhcs=true ceph_rhcs_version=2 ceph_rhcs_cdn_install=true cluster_network=\"#{SUBNET}0/24\" public_network=\"#{SUBNET}0/24\" monitor_interface=\"eth1\"'"
           ]
