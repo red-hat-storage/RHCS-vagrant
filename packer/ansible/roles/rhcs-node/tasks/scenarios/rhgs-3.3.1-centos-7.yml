@@ -1,0 +1,19 @@
+---
+
+- name: install gluster packages including samba, AD and ganesha, gdeploy and depdencies
+  yum: name={{ item }} state=present
+  with_items:
+    - glusterfs
+    - glusterfs-cli
+    - glusterfs-libs
+    - glusterfs-server
+    - gdeploy
+    - policycoreutils-python
+    - samba
+    - samba-client
+    - samba-winbind
+    - samba-winbind-clients
+    - samba-winbind-krb5-locator
+    - samba-winbind-modules
+    - glusterfs-ganesha
+...

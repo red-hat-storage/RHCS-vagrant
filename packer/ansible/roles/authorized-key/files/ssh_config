@@ -1,0 +1,3 @@
+Host RHCS*
+  StrictHostKeyChecking no
+  UserKnownHostsFile /dev/null

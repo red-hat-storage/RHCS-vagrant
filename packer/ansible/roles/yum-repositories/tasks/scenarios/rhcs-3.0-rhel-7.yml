@@ -1,0 +1,17 @@
+---
+
+- name: register to repositories
+  yum_repository:
+    name: "{{ item.name }}"
+    description: "{{ item.name }}"
+    baseurl: "{{ item.url }}"
+    enabled: yes
+    gpgcheck: no
+  with_items:
+    - { name: "rhel-7-server-rpms", url: "http://pulp.dist.prod.ext.phx2.redhat.com/content/dist/rhel/server/7/7Server/x86_64/os/" }
+    - { name: "rhel-7-server-extras-rpms", url: "http://pulp.dist.prod.ext.phx2.redhat.com/content/dist/rhel/server/7/7Server/x86_64/extras/os/" }
+    - { name: "rhel-7-server-rhceph-3-mon-rpms", url: "http://pulp.dist.prod.ext.phx2.redhat.com/content/dist/rhel/server/7/7Server/x86_64/rhceph-mon/3/os/" }
+    - { name: "rhel-7-server-rhceph-3-osd-rpms", url: "http://pulp.dist.prod.ext.phx2.redhat.com/content/dist/rhel/server/7/7Server/x86_64/rhceph-osd/3/os/" }
+    - { name: "rhel-7-server-rhceph-3-tools-rpms", url: "http://pulp.dist.prod.ext.phx2.redhat.com/content/dist/rhel/server/7/7Server/x86_64/rhceph-tools/3/os/" }
+
+...

@@ -1,0 +1,4 @@
+---
+update_packages: true
+system_reboot: true
+...

@@ -1,0 +1,31 @@
+---
+
+- include_tasks: scenarios/virtualbox-rhel-7.yml
+  when:
+    - os_version is defined
+    - os_version == "rhel-7"
+    - platform is defined
+    - platform == "virtualbox"
+
+- include_tasks: scenarios/virtualbox-centos-7.yml
+  when:
+    - os_version is defined
+    - os_version == "centos-7"
+    - platform is defined
+    - platform == "virtualbox"
+
+- include_tasks: scenarios/libvirt-rhel-7.yml
+  when:
+    - os_version is defined
+    - os_version == "rhel-7"
+    - platform is defined
+    - platform == "libvirt"
+
+- include_tasks: scenarios/libvirt-centos-7.yml
+  when:
+    - os_version is defined
+    - os_version == "centos-7"
+    - platform is defined
+    - platform == "libvirt"
+
+...

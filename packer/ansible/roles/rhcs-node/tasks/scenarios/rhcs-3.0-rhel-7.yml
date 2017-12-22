@@ -1,0 +1,28 @@
+---
+
+- name: pre-downloading rhcs packages
+  shell: yum -y --downloadonly install {{ item }}
+  with_items:
+    - ceph-base
+    - ceph-common
+    - ceph-selinux
+    - ceph-osd
+    - ceph-mon
+    - ceph-mgr
+    - cephmetrics-collectors
+    - ceph-fuse
+    - ceph-iscsi-cli
+    - ceph-iscsi-config
+    - ceph-iscsi-tools
+    - ceph-mds
+    - ceph-medic
+    - ceph-radosgw
+    - ceph-ansible
+    - nfs-ganesha
+    - nfs-ganesha-ceph
+    - nfs-ganesha-rgw
+
+- name: pre-downloading ceph container image
+  docker_image: name=registry.access.redhat.com/rhceph/rhceph-3-rhel7
+
+...

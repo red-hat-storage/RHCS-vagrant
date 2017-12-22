@@ -1,0 +1,9 @@
+---
+
+- import_tasks: firewall-configuration.yml
+
+- import_tasks: package-installation.yml
+
+- import_tasks: service-config.yml
+
+...

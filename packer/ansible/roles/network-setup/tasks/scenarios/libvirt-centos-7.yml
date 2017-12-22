@@ -1,0 +1,33 @@
+---
+
+- name: configure profile of first nic on centos 7 for libvirt
+  shell: nmcli connection modify eth0 802-3-ethernet.mac-address '' connection.interface-name eth0 connection.zone public connection.autoconnect yes
+
+- name: add first nic to public zone on centos 7 for libvirt
+  lineinfile:
+    path: /etc/sysconfig/network-scripts/ifcfg-eth0
+    regexp: "^ZONE="
+    line: "ZONE=public"
+
+- name: configure profile of second nic on centos 7 for libvirt
+  shell: nmcli connection add con-name eth1 ifname eth1 type ethernet 802-3-ethernet.mac-address '' connection.zone internal connection.autoconnect yes ipv4.method auto ipv4.never-default yes ipv4.ignore-auto-dns yes
+
+- name: add second nic to internal zone on centos 7 for libvirt
+  lineinfile:
+    path: /etc/sysconfig/network-scripts/ifcfg-eth1
+    regexp: "^ZONE="
+    line: "ZONE=internal"
+
+- name: configure profile of third nic on centos 7 for libvirt
+  shell: nmcli connection add con-name eth2 ifname eth2 type ethernet 802-3-ethernet.mac-address '' connection.zone trusted connection.autoconnect yes ipv4.method auto ipv4.never-default yes ipv4.ignore-auto-dns yes
+
+- name: add third nic to trusted zone on centos 7 for libvirt
+  lineinfile:
+    path: /etc/sysconfig/network-scripts/ifcfg-eth2
+    regexp: "^ZONE="
+    line: "ZONE=trusted"
+
+- name: disable bonding
+  lineinfile: dest=/etc/modprobe.d/blacklist-bonding.conf create=yes line='blacklist bonding'
+
+...
