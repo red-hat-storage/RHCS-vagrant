@@ -1,0 +1,21 @@
+---
+
+- name: install ceph-ansible-copilot pre-requisites
+  yum: name={{ item }} state=present
+  with_items:
+    - git
+    - python-urwid
+
+- name: checkout ceph-ansible-copilot from GitHub
+  git:
+    repo: https://github.com/pcuzner/ceph-ansible-copilot.git
+    dest: /home/vagrant/ceph-ansible-copilot
+    force: yes
+  become: false
+
+- name: install ceph-ansible-copilot via setup.py
+  shell: python setup.py install
+  args:
+    chdir: /home/vagrant/ceph-ansible-copilot
+
+...

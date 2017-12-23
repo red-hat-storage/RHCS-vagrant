@@ -16,4 +16,5 @@
     - authorized-key
     - docker-host
     - rhcs-node
+    - ceph-ansible-copilot
 ...

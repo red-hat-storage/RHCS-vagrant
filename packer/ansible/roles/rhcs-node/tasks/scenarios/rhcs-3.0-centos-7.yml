@@ -25,6 +25,6 @@
     - nfs-ganesha-rgw
 
 - name: pre-downloading ceph container image
-  docker_image: name=registry.access.redhat.com/rhceph/rhceph-3-rhel7
+  docker_image: name=registry.hub.docker.com/ceph/tag-stable-3.0-luminous-centos-7
 
 ...

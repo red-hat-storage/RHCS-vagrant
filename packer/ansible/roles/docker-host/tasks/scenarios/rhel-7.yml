@@ -1,5 +1,8 @@
 ---
 
+- name: install ansible docker prerequisites
+  yum: name=docker-python state=present
+
 - name: install docker
   yum: name=docker state=present
 
