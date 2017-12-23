@@ -1,0 +1,29 @@
+---
+
+- hosts: rhcs-nodes
+
+  become: true
+
+  tasks:
+
+    - name: generate ceph-ansible configuration for virtualbox
+      template:
+        src: "rpm-config/{{ item }}.j2"
+        dest: /usr/share/ceph-ansible/group_vars/
+      when:
+        - provider is defined
+        - provider == "virtualbox"
+      with_items:
+        - all.yml
+        - osds.yml
+        - rgws.yml
+        - mds.yml
+        - mgrs.yml
+        - mons.yml
+        - nfss.yml
+        - osds.yml
+        - rbd-mirrors.yml
+        - restapis.yml
+        - rgws.yml
+
+...

@@ -1,0 +1,7 @@
+127.0.0.0 localhost localhost.localdomain localhost4 localhost4.localdomain4
+::1       localhost localhost.localdomain localhost6 localhost6.localdomain6
+
+{% for host in groups["all"]|sort %}
+{% set second_nic = hostvars[host].ansible_interfaces | difference(["lo",hostvars[host].ansible_default_ipv4.alias]) | first %}
+{{ hostvars[host]["ansible_" + second_nic]["ipv4"]["address"] }} {{ hostvars[host]["ansible_hostname"] }} {{ hostvars[host]["ansible_hostname"] }}.local
+{% endfor %}
