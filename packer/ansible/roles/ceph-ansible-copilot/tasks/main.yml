@@ -5,6 +5,7 @@
   with_items:
     - git
     - python-urwid
+    - python-paramiko
 
 - name: checkout ceph-ansible-copilot from GitHub
   git:

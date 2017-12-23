@@ -19,10 +19,12 @@
     - ceph-mds
     - ceph-medic
     - ceph-radosgw
-    - ceph-ansible
     - nfs-ganesha
     - nfs-ganesha-ceph
     - nfs-ganesha-rgw
+
+- name: install ceph-ansible
+  yum: name=ceph-ansible state=present
 
 - name: pre-downloading ceph container image
   docker_image: name=registry.hub.docker.com/ceph/tag-stable-3.0-luminous-centos-7
