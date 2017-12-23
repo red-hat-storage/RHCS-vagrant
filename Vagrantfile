@@ -171,9 +171,9 @@ numberOf["OSDs"][:value].times       { |n| cluster["OSD#{n}"]    = { :cpus => VM
 numberOf["RGWs"][:value].times       { |n| cluster["RGW#{n}"]    = { :cpus => VMCPU, :mem => VMMEM, :group => "rgws" } }
 numberOf["MDSs"][:value].times       { |n| cluster["MDS#{n}"]    = { :cpus => VMCPU, :mem => VMMEM, :group => "mdss" } }
 numberOf["Clients"][:value].times    { |n| cluster["CLIENT#{n}"] = { :cpus => VMCPU, :mem => VMMEM, :group => "clients" } }
-numberOf["MONs"][:value].times       { |n| cluster["MON#{n}"]    = { :cpus => VMCPU, :mem => VMMEM, :group => "mons" } }
 numberOf["NFSs"][:value].times       { |n| cluster["NFS#{n}"]    = { :cpus => VMCPU, :mem => VMMEM, :group => "nfss" } }
 numberOf["iSCSI-GWs"][:value].times  { |n| cluster["ISCSI#{n}"]    = { :cpus => VMCPU, :mem => VMMEM, :group => "nfss" } }
+numberOf["MONs"][:value].times       { |n| cluster["MON#{n}"]    = { :cpus => VMCPU, :mem => VMMEM, :group => "mons" } }
 
 
 Vagrant.configure(2) do |config|
@@ -190,8 +190,8 @@ Vagrant.configure(2) do |config|
         # private VM-only network where ceph client traffic will flow
         override.vm.network "private_network", type: "dhcp", nic_type: "virtio", auto_config: false
 
-        # private VM-only network where ceph cluster traffic will flow
-        override.vm.network "private_network", type: "dhcp", nic_type: "virtio", auto_config: false
+        # private VM-only network, on specified 10.0.0.x subnet, where ceph cluster traffic will flow
+        override.vm.network "private_network", type: "dhcp", nic_type: "virtio", auto_config: false, ip: "10.0.0.1"
 
         vb.name = hostname
         vb.memory = info[:mem]
@@ -223,13 +223,10 @@ Vagrant.configure(2) do |config|
       # provision nodes with ansible
       if index == cluster.size - 1
 
-        # machine.vm.provision "shell", inline: <<-SHELL
-        #   set -x
-        #   cd /vagrant/ceph-ansible
-        #   echo '' > roles/ceph-common/tasks/pre_requisites/prerequisite_rh_storage_cdn_install.yml
-        #   cp ../ceph-ansible-fixes/activate_osds.yml roles/ceph-osd/tasks/
-        #   cp ../ceph-ansible-fixes/check_devices_auto.yml roles/ceph-osd/tasks/
-        # SHELL
+        machine.vm.provision :ansible do |ansible|
+          ansible.limit = "all"
+          ansible.playbook = "ansible/prepare-environment.yml"
+        end
 
         # machine.vm.provision :ansible_local do |ansible|
         #   ansible.provisioning_path = '/vagrant/ceph-ansible/'
