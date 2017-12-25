@@ -43,9 +43,9 @@ numberOf = {
 }
 
 clusterType = {
-  "default" => { :type => "RPM" },
-  "rpm-based" => { :type => "RPM" },
-  "containerized" => { :type => "CSD" },
+  "default" => { :type => "rpm" },
+  "rpm-based" => { :type => "rpm" },
+  "containerized" => { :type => "csd" },
 }
 
 rhcsVbox = rhcsBox["default"][:virtualbox]
@@ -132,7 +132,9 @@ if ARGV[0] == "up"
       print "  * #{settings[:value]} #{name}\n"
     end
   }
-  environment.puts(clusterInstall)
+
+  environment.puts(clusterInit.to_i)
+  environment.puts(clusterInstall.to_s)
 
   print "\e[37m\n\n"
 
@@ -144,7 +146,8 @@ else # So that we destroy and can connect to all VMs...
   numberOf.each { |name, settings|
     settings[:value] = environment.readline.to_i
   }
-  clusterInstall = environment.readline.to_i
+  clusterInit = environment.readline.to_i
+  clusterInstall = environment.readline.to_s
 end
 
 environment.close
@@ -230,7 +233,7 @@ Vagrant.configure(2) do |config|
 
         machine.vm.provision :ansible do |ansible|
           ansible.limit = "all"
-          ansible.extra_vars = { install_type: "rpm" }
+          ansible.extra_vars = { install_type: clusterInstall }
           ansible.groups = {
             'mons'         => (0...numberOf["MONs"][:value]).map    { |j| "MON#{j}" },
             'osds'         => (0...numberOf["OSDs"][:value]).map    { |j| "OSD#{j}" },
@@ -242,6 +245,15 @@ Vagrant.configure(2) do |config|
             'rhcs-nodes:children' => ['mons','osds','mdss','rgws','nfss','iscsi-gws','clients']
           }
           ansible.playbook = "ansible/prepare-ceph.yml"
+        end
+
+        if clusterInit == 1
+          machine.vm.provision :ansible_local do |ansible_local|
+            ansible_local.limit = "all"
+            ansible_local.provisioning_path = "/usr/share/ceph-ansible"
+            ansible_local.inventory_path = "/etc/ansible/hosts"
+            ansible_local.playbook = "site.yml.sample"
+          end
         end
 
         # machine.vm.provision :ansible_local do |ansible|
