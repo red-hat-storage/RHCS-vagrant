@@ -191,7 +191,7 @@ Vagrant.configure(2) do |config|
         override.vm.network "private_network", type: "dhcp", nic_type: "virtio", auto_config: false
 
         # private VM-only network, on specified 10.0.0.x subnet, where ceph cluster traffic will flow
-        override.vm.network "private_network", type: "dhcp", nic_type: "virtio", auto_config: false, ip: "10.0.0.1"
+        override.vm.network "private_network", type: "dhcp", nic_type: "virtio", auto_config: false, ip: "172.16.0.1"
 
         vb.name = hostname
         vb.memory = info[:mem]
@@ -226,6 +226,22 @@ Vagrant.configure(2) do |config|
         machine.vm.provision :ansible do |ansible|
           ansible.limit = "all"
           ansible.playbook = "ansible/prepare-environment.yml"
+        end
+
+        machine.vm.provision :ansible do |ansible|
+          ansible.limit = "all"
+          ansible.extra_vars = { install_type: "rpm" }
+          ansible.groups = {
+            'mons'         => (0...numberOf["MONs"][:value]).map    { |j| "MON#{j}" },
+            'osds'         => (0...numberOf["OSDs"][:value]).map    { |j| "OSD#{j}" },
+            'mdss'         => (0...numberOf["MDSs"][:value]).map    { |j| "MDS#{j}" },
+            'rgws'         => (0...numberOf["NFSs"][:value]).map    { |j| "RGW#{j}" },
+            'nfss'         => (0...numberOf["NFSs"][:value]).map    { |j| "NFS#{j}" },
+            'iscsi-gws'         => (0...numberOf["iSCSI-GWs"][:value]).map    { |j| "ISCSI#{j}" },
+            'clients'      => (0...numberOf["Clients"][:value]).map { |j| "CLIENT#{j}" },
+            'rhcs-nodes:children' => ['mons','osds','mdss','rgws','nfss','iscsi-gws','clients']
+          }
+          ansible.playbook = "ansible/prepare-ceph.yml"
         end
 
         # machine.vm.provision :ansible_local do |ansible|

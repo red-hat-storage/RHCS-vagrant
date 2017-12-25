@@ -314,7 +314,9 @@ cephx: true
 # Preference will go to monitor_address if both monitor_address and monitor_interface are defined.
 # To use an IPv6 address, use the monitor_address setting instead (and set ip_version to ipv6)
 
-[% set second_nic = hostvars[host].ansible_interfaces | difference(["lo",hostvars[host].ansible_default_ipv4.alias]) | first %]
+[% set second_nic = ansible_interfaces | difference(["lo",ansible_default_ipv4.alias]) | sort | first %]
+
+[% set third_nic = ansible_interfaces | difference(["lo",ansible_default_ipv4.alias,second_nic]) | first %]
 
 monitor_interface: [[ second_nic ]]
 #monitor_address: 0.0.0.0
@@ -323,11 +325,15 @@ monitor_interface: [[ second_nic ]]
 ip_version: ipv4
 #mon_use_fqdn: false # if set to true, the MON name used will be the fqdn in the ceph.conf
 
+[% set second_nic_netmask = hostvars[inventory_hostname]['ansible_' + second_nic]['ipv4']['network'] + '/' + hostvars[inventory_hostname]['ansible_' + second_nic]['ipv4']['netmask'] %]
+
+[% set third_nic_netmask = hostvars[inventory_hostname]['ansible_' + third_nic]['ipv4']['network'] + '/' + hostvars[inventory_hostname]['ansible_' + third_nic]['ipv4']['netmask'] %]
+
 ## OSD options
 #
 journal_size: 1024 # OSD journal size in MB
-#public_network: 0.0.0.0/0
-#cluster_network: "{{ public_network }}"
+public_network: [[ second_nic_netmask | ipaddr('net') ]]
+cluster_network: [[ third_nic_netmask | ipaddr('net') ]]
 #osd_mkfs_type: xfs
 #osd_mkfs_options_xfs: -f -i size=2048
 #osd_mount_options_xfs: noatime,largeio,inode64,swalloc
@@ -361,7 +367,7 @@ journal_size: 1024 # OSD journal size in MB
 # Eg. If you want to specify for each radosgw node which address the radosgw will bind to you can set it in your **inventory host file** by using 'radosgw_address' variable.
 # Preference will go to radosgw_address if both radosgw_address and radosgw_interface are defined.
 # To use an IPv6 address, use the radosgw_address setting instead (and set ip_version to ipv6)
-#radosgw_interface: interface
+radosgw_interface: [[ second_nic ]]
 #radosgw_address: "{{ '0.0.0.0' if rgw_containerized_deployment else 'address' }}" # backward compatibility with stable-2.2, will disappear in stable 3.1
 #radosgw_address_block: subnet
 #radosgw_keystone: false # activate OpenStack Keystone options full detail here: http://ceph.com/docs/master/radosgw/keystone/

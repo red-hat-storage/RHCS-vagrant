@@ -19,6 +19,4 @@
     - name: re-generate machine id
       shell: systemd-machine-id-setup
 
-    - debug: var=hostvars
-
 ...
