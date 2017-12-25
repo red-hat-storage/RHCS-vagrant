@@ -43,9 +43,9 @@ numberOf = {
 }
 
 clusterType = {
-  "default" => { :type => "RPM" },
-  "rpm-based" => { :type => "RPM" },
-  "containerized" => { :type => "CSD" },
+  "default" => { :type => "rpm" },
+  "rpm-based" => { :type => "rpm" },
+  "containerized" => { :type => "csd" },
 }
 
 rhcsVbox = rhcsBox["default"][:virtualbox]
@@ -132,7 +132,9 @@ if ARGV[0] == "up"
       print "  * #{settings[:value]} #{name}\n"
     end
   }
-  environment.puts(clusterInstall)
+
+  environment.puts(clusterInit.to_i)
+  environment.puts(clusterInstall.to_s)
 
   print "\e[37m\n\n"
 
@@ -144,7 +146,8 @@ else # So that we destroy and can connect to all VMs...
   numberOf.each { |name, settings|
     settings[:value] = environment.readline.to_i
   }
-  clusterInstall = environment.readline.to_i
+  clusterInit = environment.readline.to_i
+  clusterInstall = environment.readline.to_s
 end
 
 environment.close
@@ -171,9 +174,9 @@ numberOf["OSDs"][:value].times       { |n| cluster["OSD#{n}"]    = { :cpus => VM
 numberOf["RGWs"][:value].times       { |n| cluster["RGW#{n}"]    = { :cpus => VMCPU, :mem => VMMEM, :group => "rgws" } }
 numberOf["MDSs"][:value].times       { |n| cluster["MDS#{n}"]    = { :cpus => VMCPU, :mem => VMMEM, :group => "mdss" } }
 numberOf["Clients"][:value].times    { |n| cluster["CLIENT#{n}"] = { :cpus => VMCPU, :mem => VMMEM, :group => "clients" } }
-numberOf["MONs"][:value].times       { |n| cluster["MON#{n}"]    = { :cpus => VMCPU, :mem => VMMEM, :group => "mons" } }
 numberOf["NFSs"][:value].times       { |n| cluster["NFS#{n}"]    = { :cpus => VMCPU, :mem => VMMEM, :group => "nfss" } }
 numberOf["iSCSI-GWs"][:value].times  { |n| cluster["ISCSI#{n}"]    = { :cpus => VMCPU, :mem => VMMEM, :group => "nfss" } }
+numberOf["MONs"][:value].times       { |n| cluster["MON#{n}"]    = { :cpus => VMCPU, :mem => VMMEM, :group => "mons" } }
 
 
 Vagrant.configure(2) do |config|
@@ -190,8 +193,8 @@ Vagrant.configure(2) do |config|
         # private VM-only network where ceph client traffic will flow
         override.vm.network "private_network", type: "dhcp", nic_type: "virtio", auto_config: false
 
-        # private VM-only network where ceph cluster traffic will flow
-        override.vm.network "private_network", type: "dhcp", nic_type: "virtio", auto_config: false
+        # private VM-only network, on specified 10.0.0.x subnet, where ceph cluster traffic will flow
+        override.vm.network "private_network", type: "dhcp", nic_type: "virtio", auto_config: false, ip: "172.16.0.1"
 
         vb.name = hostname
         vb.memory = info[:mem]
@@ -223,13 +226,35 @@ Vagrant.configure(2) do |config|
       # provision nodes with ansible
       if index == cluster.size - 1
 
-        # machine.vm.provision "shell", inline: <<-SHELL
-        #   set -x
-        #   cd /vagrant/ceph-ansible
-        #   echo '' > roles/ceph-common/tasks/pre_requisites/prerequisite_rh_storage_cdn_install.yml
-        #   cp ../ceph-ansible-fixes/activate_osds.yml roles/ceph-osd/tasks/
-        #   cp ../ceph-ansible-fixes/check_devices_auto.yml roles/ceph-osd/tasks/
-        # SHELL
+        machine.vm.provision :ansible do |ansible|
+          ansible.limit = "all"
+          ansible.playbook = "ansible/prepare-environment.yml"
+        end
+
+        machine.vm.provision :ansible do |ansible|
+          ansible.limit = "all"
+          ansible.extra_vars = { install_type: clusterInstall }
+          ansible.groups = {
+            'mons'         => (0...numberOf["MONs"][:value]).map    { |j| "MON#{j}" },
+            'osds'         => (0...numberOf["OSDs"][:value]).map    { |j| "OSD#{j}" },
+            'mdss'         => (0...numberOf["MDSs"][:value]).map    { |j| "MDS#{j}" },
+            'rgws'         => (0...numberOf["NFSs"][:value]).map    { |j| "RGW#{j}" },
+            'nfss'         => (0...numberOf["NFSs"][:value]).map    { |j| "NFS#{j}" },
+            'iscsi-gws'         => (0...numberOf["iSCSI-GWs"][:value]).map    { |j| "ISCSI#{j}" },
+            'clients'      => (0...numberOf["Clients"][:value]).map { |j| "CLIENT#{j}" },
+            'rhcs-nodes:children' => ['mons','osds','mdss','rgws','nfss','iscsi-gws','clients']
+          }
+          ansible.playbook = "ansible/prepare-ceph.yml"
+        end
+
+        if clusterInit == 1
+          machine.vm.provision :ansible_local do |ansible_local|
+            ansible_local.limit = "all"
+            ansible_local.provisioning_path = "/usr/share/ceph-ansible"
+            ansible_local.inventory_path = "/etc/ansible/hosts"
+            ansible_local.playbook = "site.yml.sample"
+          end
+        end
 
         # machine.vm.provision :ansible_local do |ansible|
         #   ansible.provisioning_path = '/vagrant/ceph-ansible/'
