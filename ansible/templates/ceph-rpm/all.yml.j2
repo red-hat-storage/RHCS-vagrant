@@ -454,6 +454,13 @@ radosgw_interface: [[ second_nic ]]
 #
 #ceph_conf_overrides: {}
 
+[% if groups['osds']|length <= 2 %]
+ceph_conf_overrides:
+  global:
+    osd_pool_default_size: 2
+    osd_pool_default_min_size: 1
+[% endif %]
+
 
 #############
 # OS TUNING #
