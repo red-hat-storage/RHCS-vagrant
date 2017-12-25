@@ -1,7 +1,7 @@
 ---
 
 - name: pre-downloading rhcs packages
-  shell: yum -y --downloadonly install {{ item }}
+  shell: yum -y --downloadonly --resolve install {{ item }}
   args:
     warn: no
   with_items:
@@ -22,9 +22,20 @@
     - nfs-ganesha
     - nfs-ganesha-ceph
     - nfs-ganesha-rgw
+    - ntp
+    - hdparm
+    - python-setuptools
+    - python-pycurl
 
 - name: install ceph-ansible
   yum: name=ceph-ansible state=present
+
+- name: disable deprecation warnings for ceph-ansible
+  lineinfile:
+    path: /etc/ansible/ansible.cfg
+    line: "deprecation_warnings = False"
+    regexp: "^#deprecation_warnings"
+    state: present
 
 - name: pre-downloading ceph container image
   docker_image: name=registry.hub.docker.com/ceph/tag-stable-3.0-luminous-centos-7
