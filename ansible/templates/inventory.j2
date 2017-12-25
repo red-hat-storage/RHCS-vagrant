@@ -5,6 +5,13 @@
 {% endfor %}
 {% endif %}
 
+{% if groups['mons'] is defined and groups['mons']|length > 0 %}
+[mgrs]
+{% for host in groups['mons'] %}
+{{ host }}
+{% endfor %}
+{% endif %}
+
 {% if groups['osds'] is defined and groups['osds']|length > 0 %}
 [osds]
 {% for host in groups['osds'] %}
