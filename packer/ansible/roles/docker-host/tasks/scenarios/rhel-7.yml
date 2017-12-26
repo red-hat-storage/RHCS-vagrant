@@ -1,12 +1,10 @@
 ---
 
-- name: install ansible docker prerequisites
-  yum: name=docker-python state=present
-
-- name: install docker and container-storage-setup
+- name: install docker and ansible module prerequisites
   yum: name={{ item }} state=present
   with_items:
     - docker
+    - docker-python
 
 - name: create docker storage config
   copy: src=docker-storage-setup-rhel-7 dest=/etc/sysconfig/docker-storage-setup
