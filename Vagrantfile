@@ -105,6 +105,7 @@ if ARGV[0] == "up"
 
   while clusterInstall == ""
     print "\n\e[1;37mPlease choose your installation type [%s] \e[32m" % clusterType["default"][:type]
+    print "\n\e[1;37mTypes available: \e[32m\n"
 
     clusterType.each { |key, value|
       puts ("  * " + key) if not key == "default"
@@ -146,8 +147,8 @@ else # So that we destroy and can connect to all VMs...
   numberOf.each { |name, settings|
     settings[:value] = environment.readline.to_i
   }
-  clusterInit = environment.readline.to_i
-  clusterInstall = environment.readline.to_s
+  clusterInit = environment.readline.strip.to_i
+  clusterInstall = environment.readline.strip.to_s
 end
 
 environment.close
