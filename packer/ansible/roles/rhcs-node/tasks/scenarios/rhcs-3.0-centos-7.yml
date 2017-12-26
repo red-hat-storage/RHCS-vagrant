@@ -1,9 +1,7 @@
 ---
 
-- name: pre-downloading rhcs packages
-  shell: yum -y --downloadonly install {{ item }}
-  args:
-    warn: no
+- name: pre-installing ceph-packages on centos 7
+  yum: name={{ item }} state=present
   with_items:
     - ceph-base
     - ceph-common
@@ -26,9 +24,7 @@
     - hdparm
     - python-setuptools
     - python-pycurl
-
-- name: install ceph-ansible
-  yum: name=ceph-ansible state=present
+    - ceph-ansible
 
 - name: disable deprecation warnings for ceph-ansible
   lineinfile:
