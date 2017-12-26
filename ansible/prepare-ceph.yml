@@ -7,7 +7,7 @@
   tasks:
 
     - block:
-      
+
       - name: generate ceph-ansible configuration for rpm-based install
         template:
           src: "{{ item }}"
