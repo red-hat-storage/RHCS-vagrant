@@ -26,13 +26,6 @@
     - python-pycurl
     - ceph-ansible
 
-- name: disable deprecation warnings for ceph-ansible
-  lineinfile:
-    path: /usr/share/ceph-ansible/ansible.cfg
-    line: "deprecation_warnings = False"
-    regexp: "^#deprecation_warnings"
-    state: present
-
 - name: set ansible to be less chatty for ceph-ansible
   lineinfile:
     path: /usr/share/ceph-ansible/ansible.cfg
@@ -40,6 +33,12 @@
     insertafter: '^\[defaults\]$'
     state: present
 
+- name: disable deprecation warnings for ceph-ansible
+  lineinfile:
+    path: /usr/share/ceph-ansible/ansible.cfg
+    line: "deprecation_warnings = False"
+    insertafter: '^\[defaults\]$'
+    state: present
 
 - name: pre-downloading ceph container image
   docker_image: name=registry.access.redhat.com/rhceph/rhceph-3-rhel7
