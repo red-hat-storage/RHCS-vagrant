@@ -1,7 +1,7 @@
 ---
 
 - name: pre-downloading rhcs packages
-  shell: yum -y --downloadonly --resolve install {{ item }}
+  shell: yum -y --downloadonly install {{ item }}
   args:
     warn: no
   with_items:
