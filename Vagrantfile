@@ -22,12 +22,12 @@ VMDISK = 30       # size of brick disks in GB per VM
 
 rhcsBox = {
   "default" => {
-    :virtualbox => "file:///tmp/rhcs-rhel-7/virtualbox-rhcs-node-3.0-rhel-7.box",
-    :libvirt => "file:///tmp/rhcs-rhel-7/libvirt-rhcs-node-3.0-rhel-7.box"
+    :virtualbox => "http://file.str.redhat.com/~dmesser/rhcs-vagrant/virtualbox-rhcs-node-3.0-rhel-7.box",
+    :libvirt => "http://file.str.redhat.com/~dmesser/rhcs-vagrant/libvirt-rhcs-node-3.0-rhel-7.box"
   },
   "3.0" => {
-    :virtualbox => "file:///tmp/rhcs-rhel-7/virtualbox-rhcs-node-3.0-rhel-7.box",
-    :libvirt => "file:///tmp/rhcs-rhel-7/libvirt-rhcs-node-3.0-rhel-7.box"
+    :virtualbox => "http://file.str.redhat.com/~dmesser/rhcs-vagrant/virtualbox-rhcs-node-3.0-rhel-7.box",
+    :libvirt => "http://file.str.redhat.com/~dmesser/rhcs-vagrant/libvirt-rhcs-node-3.0-rhel-7.box"
   }
 }
 
