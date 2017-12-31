@@ -230,11 +230,11 @@ Vagrant.configure(2) do |config|
         override.vm.network "private_network", type: "dhcp", nic_type: "virtio", auto_config: false, ip: "172.16.0.1"
 
         # Use virtio device drivers
-        libvirt.nic_model_type = "virtio"
-        libvirt.disk_bus = "virtio"
+        lv.nic_model_type = "virtio"
+        lv.disk_bus = "virtio"
 
-        # connect to local libvirt daemon as root
-        libvirt.username = "root"
+        # connect to local libvirtd daemon as root
+        lv.username = "root"
 
         if info[:group] == "osds"
           lvAttachDisks( numberOf["disks"][:value], lv )
