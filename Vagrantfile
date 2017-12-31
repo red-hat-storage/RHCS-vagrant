@@ -219,6 +219,8 @@ Vagrant.configure(2) do |config|
       machine.vm.provider "libvirt" do |lv, override|
         override.vm.box = rhcsLbox
 
+        lv.storage_pool_name = ENV['LIBVIRT_STORAGE_POOL'] || 'default'
+
         # Set VM resources
         lv.memory = info[:mem]
         lv.cpus = info[:cpus]
