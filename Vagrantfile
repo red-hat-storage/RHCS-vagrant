@@ -217,11 +217,28 @@ Vagrant.configure(2) do |config|
       end
 
       machine.vm.provider "libvirt" do |lv, override|
-        # override.vm.box = lvBoxURL
-        # override.vm.synced_folder '.', '/vagrant', type: 'rsync', rsync__args: ["--verbose", "--archive", "--delete"]
-        # lv.memory = info[:mem]
-        # lv.cpus = info[:cpus]
-        # lvAttachDisks( numberOf["disks"][:value], lv )
+        override.vm.box = rhcsLbox
+
+        # Set VM resources
+        lv.memory = info[:mem]
+        lv.cpus = info[:cpus]
+
+        # private VM-only network where ceph client traffic will flow
+        override.vm.network "private_network", type: "dhcp", nic_type: "virtio", auto_config: false
+
+        # private VM-only network, on specified 10.0.0.x subnet, where ceph cluster traffic will flow
+        override.vm.network "private_network", type: "dhcp", nic_type: "virtio", auto_config: false, ip: "172.16.0.1"
+
+        # Use virtio device drivers
+        libvirt.nic_model_type = "virtio"
+        libvirt.disk_bus = "virtio"
+
+        # connect to local libvirt daemon as root
+        libvirt.username = "root"
+
+        if info[:group] == "osds"
+          lvAttachDisks( numberOf["disks"][:value], lv )
+        end
       end
 
       # provision nodes with ansible
@@ -255,25 +272,8 @@ Vagrant.configure(2) do |config|
             ansible_local.inventory_path = "/etc/ansible/hosts"
             ansible_local.playbook = "site.yml.sample"
           end
-        end
-
-        # machine.vm.provision :ansible_local do |ansible|
-        #   ansible.provisioning_path = '/vagrant/ceph-ansible/'
-        #   ansible.playbook = "/vagrant/ceph-ansible/site.yml.sample"
-        #   ansible.install = false
-        #   # ansible.sudo = true
-        #   # ansible.verbose = true
-        #   ansible.verbose = 'vvvv'
-        #   ansible.limit = 'all'
-        #   ansible.groups = {
-        #     'mons'         => (0...numberOf["MONs"][:value]).map    { |j| "MON#{j}" },
-        #     'osds'         => (0...numberOf["OSDs"][:value]).map    { |j| "OSD#{j}" },
-        #     'mdss'         => (0...numberOf["MDSs"][:value]).map    { |j| "MDS#{j}" },
-        #     'rgws'         => (0...numberOf["RGWs"][:value]).map    { |j| "RGW#{j}" },
-        #     'clients'      => (0...numberOf["clients"][:value]).map { |j| "Client#{j}" }
-        #   }
-        # end # end provision
-      end #end if
+        end # end clusterinit
+      end #end provisioning
 
     end # end config
 
