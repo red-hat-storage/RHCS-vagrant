@@ -258,7 +258,7 @@ Vagrant.configure(2) do |config|
             'mons'         => (0...numberOf["MONs"][:value]).map    { |j| "MON#{j}" },
             'osds'         => (0...numberOf["OSDs"][:value]).map    { |j| "OSD#{j}" },
             'mdss'         => (0...numberOf["MDSs"][:value]).map    { |j| "MDS#{j}" },
-            'rgws'         => (0...numberOf["NFSs"][:value]).map    { |j| "RGW#{j}" },
+            'rgws'         => (0...numberOf["RGWs"][:value]).map    { |j| "RGW#{j}" },
             'nfss'         => (0...numberOf["NFSs"][:value]).map    { |j| "NFS#{j}" },
             'iscsi-gws'         => (0...numberOf["iSCSI-GWs"][:value]).map    { |j| "ISCSI#{j}" },
             'clients'      => (0...numberOf["Clients"][:value]).map { |j| "CLIENT#{j}" },
