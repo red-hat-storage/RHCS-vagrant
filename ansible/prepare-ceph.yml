@@ -7,7 +7,6 @@
   tasks:
 
     - block:
-
       - name: generate ceph-ansible configuration for rpm-based install
         template:
           src: "{{ item }}"
@@ -27,6 +26,27 @@
       when:
         - install_type is defined
         - install_type == "rpm"
+
+    - block:
+      - name: generate ceph-ansible configuration for containerized install
+        template:
+          src: "{{ item }}"
+          dest: /usr/share/ceph-ansible/group_vars/{{ item | basename | regex_replace('\.j2$', '') }}
+          block_start_string: "[%"
+          block_end_string: "%]"
+          variable_start_string: "[["
+          variable_end_string: "]]"
+        with_fileglob:
+          - "templates/ceph-csd/*.yml.j2"
+
+      - name: generate ceph-ansible inventory for rpm-based install
+        template:
+          src: ceph-rpm/inventory.j2
+          dest: /etc/ansible/hosts
+
+      when:
+        - install_type is defined
+        - install_type == "csd"
 
     - name: generate ceph-ansible-keys fetch directory
       file:
