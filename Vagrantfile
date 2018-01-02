@@ -343,7 +343,12 @@ Vagrant.configure(2) do |config|
             ansible_local.limit = "all"
             ansible_local.provisioning_path = "/usr/share/ceph-ansible"
             ansible_local.inventory_path = "/etc/ansible/hosts"
-            ansible_local.playbook = "site.yml.sample"
+
+            if clusterInstall == clusterType["rpm-based"][:type]
+              ansible_local.playbook = "site.yml.sample"
+            elsif clusterInstall == clusterType["containerized"][:type]
+              ansible_local.playbook = "site-docker.yml.sample"
+            end
           end
         end # end clusterinit
       end #end provisioning
