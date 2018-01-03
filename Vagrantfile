@@ -13,7 +13,7 @@ ENV['VAGRANT_NO_PARALLEL'] = 'yes'
 # General VM settings applied to all VMs
 #################
 VMCPU = 1         # number of cores per VM
-VMMEM = 1024      # amount of memory in MB per VM
+VMMEM = 1536      # amount of memory in MB per VM
 VMDISK = 30       # size of brick disks in GB per VM
 
 #################
@@ -52,6 +52,7 @@ rhcsVbox = rhcsBox["default"][:virtualbox]
 rhcsLbox = rhcsBox["default"][:libvirt]
 clusterInit = -1
 clusterInstall = ""
+osdBackend = ""
 
 if ARGV[0] == "up"
 
@@ -62,12 +63,12 @@ if ARGV[0] == "up"
     }
     print "\n\e[1;37mWhich version of Ceph do you want to use? [3.0] \e[32m"
 
-    respone = $stdin.gets.strip.to_s.downcase
-    if respone == ""
+    response = $stdin.gets.strip.to_s.downcase
+    if response == ""
       break
-    elsif boxURL.key?(respone)
-      rhcsVbox = rhcsBox[respone][:virtualbox]
-      rhcsLbox = rhcsBox[respone][:libvirt]
+    elsif boxURL.key?(response)
+      rhcsVbox = rhcsBox[response][:virtualbox]
+      rhcsLbox = rhcsBox[response][:libvirt]
       break
     else
       puts "Please enter a valid version!"
@@ -93,6 +94,26 @@ if ARGV[0] == "up"
       clusterInstall = clusterType[response][:type]
     else
       print "\e[31mPlease select a valid installation type!\e[32m"
+    end
+  end
+
+  while osdBackend == ""
+    print "\n\e[1;37mOSD Backend Types available: \e[32m\n"
+
+    ["filestore", "bluestore"].each { |value|
+      puts ("  * " + value)
+    }
+
+    print "\n\e[1;37mWhat type of OSD backend do you want to use? [filestore] \e[32m"
+    response = $stdin.gets.strip.to_s.downcase
+    if response == ""
+      osdBackend = "filestore"
+      break
+    elsif ["filestore", "bluestore"].include?(response)
+      osdBackend = response
+      break
+    else
+      puts "Please enter a valid backend type. Try again!"
     end
   end
 
@@ -178,7 +199,7 @@ if ARGV[0] == "up"
   numberOf.each { |name, settings|
     environment.puts(settings[:value].to_s)
     if name == 'disks'
-      print "  * #{settings[:value]} disks for OSD daemons in every OSD VM\n"
+      print "  * #{settings[:value]} disks for OSD daemons (#{osdBackend}) in every OSD VM\n"
     elsif clusterInstall == clusterType["containerized"][:type] and name != "OSDs"
       print "  * #{settings[:value]} #{name} (co-located with OSD)\n"
     else
@@ -188,6 +209,7 @@ if ARGV[0] == "up"
 
   environment.puts(clusterInit.to_i)
   environment.puts(clusterInstall.to_s)
+  environment.puts(osdBackend.to_s)
 
   print "\e[37m\n\n"
 
@@ -201,6 +223,7 @@ else # So that we destroy and can connect to all VMs...
   }
   clusterInit = environment.readline.strip.to_i
   clusterInstall = environment.readline.strip.to_s
+  osdBackend = environment.readline.strip.to_s
 end
 
 environment.close
@@ -310,7 +333,7 @@ Vagrant.configure(2) do |config|
 
         machine.vm.provision :ansible do |ansible|
           ansible.limit = "all"
-          ansible.extra_vars = { install_type: clusterInstall }
+          ansible.extra_vars = { install_type: clusterInstall, osd_type: osdBackend }
 
           if clusterInstall == clusterType["rpm-based"][:type]
             ansible.groups = {
