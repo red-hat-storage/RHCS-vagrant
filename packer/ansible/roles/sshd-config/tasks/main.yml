@@ -1,0 +1,15 @@
+---
+
+- name: disable reverse DNS lookup for sshd
+  lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: "^UseDNS "
+    line: "UseDNS no"
+
+- name: disable GSSAPIAuthentication for sshd
+  lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: "^GSSAPIAuthentication "
+    line: "GSSAPIAuthentication no"
+
+...

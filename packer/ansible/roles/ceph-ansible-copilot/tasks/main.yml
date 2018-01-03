@@ -19,4 +19,15 @@
   args:
     chdir: /home/vagrant/ceph-ansible-copilot
 
+- name: manage root ssh keys
+  user:
+    name: root
+    generate_ssh_key: yes
+  register: root_id_rsa
+
+- name: install root public key as authorized_key for root user
+  authorized_key:
+    user: root
+    key: "{{ root_id_rsa.ssh_public_key }}"
+
 ...

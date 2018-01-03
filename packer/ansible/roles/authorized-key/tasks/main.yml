@@ -1,6 +1,6 @@
 ---
 
-- name: manage vagrant ssh keys and set password to 'vagrant'
+- name: manage vagrant user ssh keys
   user:
     name: vagrant
     generate_ssh_key: yes

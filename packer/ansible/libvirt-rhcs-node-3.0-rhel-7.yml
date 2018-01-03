@@ -17,4 +17,5 @@
     - docker-host
     - rhcs-node
     - ceph-ansible-copilot
+    - sshd-config
 ...
