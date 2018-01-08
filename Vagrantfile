@@ -158,6 +158,7 @@ if ARGV[0] == "up"
     numberOf.drop(2).each { |name, settings|
 
       if name == "iSCSI-GWs" # ceph-ansible does not support containerized iSCSI yet
+        settings[:value] = 0
         next
       end
 
