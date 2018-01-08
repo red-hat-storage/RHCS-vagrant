@@ -38,7 +38,7 @@ numberOf = {
   'RGWs'    =>  { :value => -1, :min => 0, :default => 0 },
   'MDSs'    =>  { :value => -1, :min => 0, :default => 0 },
   'NFSs'    =>  { :value => -1, :min => 0, :default => 0 },
-  'iSCSI-GWs'    =>  { :value => -1, :min => 0, :default => 0 },
+  # 'iSCSI-GWs'    =>  { :value => -1, :min => 0, :default => 0 },
   'Clients' =>  { :value => -1, :min => 0, :default => 0 }
 }
 
@@ -157,10 +157,10 @@ if ARGV[0] == "up"
 
     numberOf.drop(2).each { |name, settings|
 
-      if name == "iSCSI-GWs" # ceph-ansible does not support containerized iSCSI yet
-        settings[:value] = 0
-        next
-      end
+      # if name == "iSCSI-GWs" # ceph-ansible does not support containerized iSCSI yet
+      #   settings[:value] = 0
+      #   next
+      # end
 
       print "\n\e[1;37mDo you want to co-locate #{name}? [no] \e[32m"
 
@@ -259,7 +259,7 @@ if clusterInstall == clusterType["rpm-based"][:type]
   numberOf["MDSs"][:value].times       { |n| cluster["MDS#{n}"]    = { :cpus => VMCPU, :mem => VMMEM, :group => "mdss" } }
   numberOf["Clients"][:value].times    { |n| cluster["CLIENT#{n}"] = { :cpus => VMCPU, :mem => VMMEM, :group => "clients" } }
   numberOf["NFSs"][:value].times       { |n| cluster["NFS#{n}"]    = { :cpus => VMCPU, :mem => VMMEM, :group => "nfss" } }
-  numberOf["iSCSI-GWs"][:value].times  { |n| cluster["ISCSI#{n}"]    = { :cpus => VMCPU, :mem => VMMEM, :group => "nfss" } }
+  # numberOf["iSCSI-GWs"][:value].times  { |n| cluster["ISCSI#{n}"]    = { :cpus => VMCPU, :mem => VMMEM, :group => "nfss" } }
   numberOf["MONs"][:value].times       { |n| cluster["MON#{n}"]    = { :cpus => VMCPU, :mem => VMMEM, :group => "mons" } }
 elsif clusterInstall == clusterType["containerized"][:type]
   numberOf["OSDs"][:value].times       { |n| cluster["OSD#{n}"]    = { :cpus => VMCPU, :mem => VMMEM, :group => "osds" } }
@@ -350,7 +350,7 @@ Vagrant.configure(2) do |config|
               'mdss'         => (0...numberOf["MDSs"][:value]).map    { |j| "MDS#{j}" },
               'rgws'         => (0...numberOf["RGWs"][:value]).map    { |j| "RGW#{j}" },
               'nfss'         => (0...numberOf["NFSs"][:value]).map    { |j| "NFS#{j}" },
-              'iscsi-gws'         => (0...numberOf["iSCSI-GWs"][:value]).map    { |j| "ISCSI#{j}" },
+              # 'iscsi-gws'         => (0...numberOf["iSCSI-GWs"][:value]).map    { |j| "ISCSI#{j}" },
               'clients'      => (0...numberOf["Clients"][:value]).map { |j| "CLIENT#{j}" },
               'rhcs-nodes:children' => ['mons','osds','mdss','rgws','nfss','iscsi-gws','clients']
             }
@@ -361,7 +361,7 @@ Vagrant.configure(2) do |config|
               'mdss'         => (0...numberOf["MDSs"][:value]).map    { |j| "OSD#{j}" },
               'rgws'         => (0...numberOf["RGWs"][:value]).map    { |j| "OSD#{j}" },
               'nfss'         => (0...numberOf["NFSs"][:value]).map    { |j| "OSD#{j}" },
-              'iscsi-gws'         => (0...numberOf["iSCSI-GWs"][:value]).map    { |j| "OSD#{j}" },
+              # 'iscsi-gws'         => (0...numberOf["iSCSI-GWs"][:value]).map    { |j| "OSD#{j}" },
               'clients'      => (0...numberOf["Clients"][:value]).map { |j| "OSD#{j}" },
               'rhcs-nodes:children' => ['mons','osds','mdss','rgws','nfss','iscsi-gws','clients']
             }
