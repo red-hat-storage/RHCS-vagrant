@@ -13,10 +13,10 @@ Optionally you can choose to deploy the monitoring UI [ceph-metrics](https://git
 
 ## Before you start - installation instructions for Vagrant / Ansible
 
-#### On RHEL 7.4
+#### On RHEL 7.4 / CentOS 7
 
 * make sure you are logged in as a user with `sudo` privileges
-* make sure your system has the following repositories enabled (`yum repolist`)
+* on RHEL 7 make sure your system has the following repositories enabled (`yum repolist`)
   * rhel-7-server-rpms
   * rhel-7-server-extras-rpms
 * install the requirements
@@ -40,6 +40,7 @@ Optionally you can choose to deploy the monitoring UI [ceph-metrics](https://git
 * install the requirements
   * `sudo dnf install ansible git gcc libvirt-devel libvirt qemu-kvm`
   * `sudo dnf install vagrant vagrant-libvirt`
+  * `sudo dnf install python-netaddr`
 * start `libvirtd`
   * `sudo systemctl enable libvirtd`
   * `sudo systemctl start libvirtd`
@@ -105,6 +106,7 @@ Optionally you can choose to deploy the monitoring UI [ceph-metrics](https://git
 	* docker service is enabled and started (using overlay2 on a separate logical volume)
   * `ceph-ansible`'s `site-docker.yml` playbook was executed
   * the selected ceph roles were installed in containers on the OSD nodes (one per node)
+    * as of today containerized iSCSI is not yet supported
 	* cluster is up and in HEALTHY state
 * If you decided to deploy `ceph-metrics`
   * an additional VM will run `ceph-metrics` dashboard components

@@ -156,6 +156,11 @@ if ARGV[0] == "up"
     }
 
     numberOf.drop(2).each { |name, settings|
+
+      if name == "iSCSI-GWs" # ceph-ansible does not support containerized iSCSI yet
+        next
+      end
+
       print "\n\e[1;37mDo you want to co-locate #{name}? [no] \e[32m"
 
       while settings[:value] < settings[:min]
@@ -269,7 +274,8 @@ Vagrant.configure(2) do |config|
       machine.vm.synced_folder ".", "/vagrant", disabled: true
 
       machine.vm.provider "virtualbox" do |vb, override|
-        override.vm.box = rhcsVbox
+        override.vm.box = "RHCS-vagrant-virtualbox"
+        override.vm.box_url = rhcsVbox
 
         # private VM-only network where ceph client traffic will flow
         override.vm.network "private_network", type: "dhcp", nic_type: "virtio", auto_config: false
@@ -297,6 +303,7 @@ Vagrant.configure(2) do |config|
       end
 
       machine.vm.provider "libvirt" do |lv, override|
+        override.vm.box = "RHCS-vagrant-libvirt"
         override.vm.box = rhcsLbox
 
         lv.storage_pool_name = ENV['LIBVIRT_STORAGE_POOL'] || 'default'
