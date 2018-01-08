@@ -48,7 +48,7 @@ gateway_ip_list: [[ ip_addresses|join(",") ]]
 # Example:
 #
 rbd_devices:
-  - { pool: 'rbd', image: 'iscsi1', size: '10G', host: 'ceph-1', state: 'present' }
+  - { pool: 'rbd', image: 'iscsi1', size: '10G', host: 'ISCSI0', state: 'present' }
 #  - { pool: 'rbd', image: 'ansible2', size: '15G', host: 'ceph-1', state: 'present' }
 #  - { pool: 'rbd', image: 'ansible3', size: '30G', host: 'ceph-1', state: 'present' }
 #  - { pool: 'rbd', image: 'ansible4', size: '50G', host: 'ceph-1', state: 'present' }

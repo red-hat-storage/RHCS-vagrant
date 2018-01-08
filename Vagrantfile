@@ -38,7 +38,7 @@ numberOf = {
   'RGWs'    =>  { :value => -1, :min => 0, :default => 0 },
   'MDSs'    =>  { :value => -1, :min => 0, :default => 0 },
   'NFSs'    =>  { :value => -1, :min => 0, :default => 0 },
-  'iSCSI-GWs'    =>  { :value => -1, :min => 0, :default => 0 },
+  # 'iSCSI-GWs'    =>  { :value => -1, :min => 0, :default => 0 },
   'Clients' =>  { :value => -1, :min => 0, :default => 0 }
 }
 
@@ -155,36 +155,48 @@ if ARGV[0] == "up"
       end
     }
 
-    numberOf.drop(2).each { |name, settings|
+    numberOf.drop(2).tap(&:pop).each { |name, settings|
 
-      if name == "iSCSI-GWs" # ceph-ansible does not support containerized iSCSI yet
-        settings[:value] = 0
-        next
-      end
+      # if name == "iSCSI-GWs" # ceph-ansible does not support containerized iSCSI yet
+      #   settings[:value] = 0
+      #   next
+      # end
 
-      print "\n\e[1;37mDo you want to co-locate #{name}? [no] \e[32m"
+      print "\n\e[1;37mHow many #{name} do you want to co-locate? [#{settings[:default]}] \e[32m"
 
-      while settings[:value] < settings[:min]
-        response = $stdin.gets.strip.to_s.downcase
+      while settings[:value] < settings[:min] or settings[:value] > numberOf["OSDs"][:value]
+        response = $stdin.gets.strip
 
-        if response == "no" or response == "n" or response == "" # The user pressed enter without input
+        if response == "0"
           settings[:value] = 0
-        elsif response == "yes" or response == "y"
-          if name == "MONs"
-            settings[:value] = [numberOf["OSDs"][:value], 3].min
-          else
-            settings[:value] = numberOf["OSDs"][:value]
-          end
+        elsif response == "" or response.to_i == 0 # The user pressed enter without input or we cannot parse the input to a number
+          settings[:value] = settings[:default]
         else
-          print "\e[31mPlease enter 'yes' or 'no'!"
-          next
+          settings[:value] = response.to_i
         end
 
         if settings[:value] < settings[:min]
           print "\e[31mYou will need at least #{settings[:min]} #{name}. Try again! \e[32m"
+        elsif settings[:value] > numberOf["OSDs"][:value]
+          print "\e[31mYou cannot have more than #{numberOf['OSDs'][:value]} #{name}. Try again! \e[32m"
         end
       end
     }
+
+    print "\n\e[1;37mDo you want to provision a client? [yes] \e[32m"
+
+    while numberOf["Clients"][:value] < numberOf["Clients"][:min]
+      response = $stdin.gets.strip.to_s.downcase
+
+      if response == "no" or response == "n" or response == "" # The user pressed enter without input
+        numberOf["Clients"][:value] = 0
+      elsif response == "yes" or response == "y"
+        numberOf["Clients"][:value] = 0
+      else
+        print "\e[31mPlease enter 'yes' or 'no'!"
+        next
+      end
+    end
   end
 
   while clusterInit == -1
@@ -199,7 +211,7 @@ if ARGV[0] == "up"
     end
   end
 
-  print "\e[32m\nOK I will provision:\n"
+  print "\e[32m\nOK I will provision:\n\n"
   environment = open('vagrant_env.conf', 'w')
   environment.puts("# BEWARE: Do NOT modify ANY settings in here or your vagrant environment will be messed up")
   numberOf.each { |name, settings|
@@ -212,6 +224,12 @@ if ARGV[0] == "up"
       print "  * #{settings[:value]} #{name}\n"
     end
   }
+
+  if clusterInit == 1
+    print "\e[32m\nI will also initialize the cluster for you using ceph-ansible\n\n"
+  else
+    print "\e[32m\nI will NOT initialize the cluster but leave an appropriate ceph-ansible setup for your convenience\n\n"
+  end
 
   environment.puts(clusterInit.to_i)
   environment.puts(clusterInstall.to_s)
@@ -259,10 +277,11 @@ if clusterInstall == clusterType["rpm-based"][:type]
   numberOf["MDSs"][:value].times       { |n| cluster["MDS#{n}"]    = { :cpus => VMCPU, :mem => VMMEM, :group => "mdss" } }
   numberOf["Clients"][:value].times    { |n| cluster["CLIENT#{n}"] = { :cpus => VMCPU, :mem => VMMEM, :group => "clients" } }
   numberOf["NFSs"][:value].times       { |n| cluster["NFS#{n}"]    = { :cpus => VMCPU, :mem => VMMEM, :group => "nfss" } }
-  numberOf["iSCSI-GWs"][:value].times  { |n| cluster["ISCSI#{n}"]    = { :cpus => VMCPU, :mem => VMMEM, :group => "nfss" } }
+  # numberOf["iSCSI-GWs"][:value].times  { |n| cluster["ISCSI#{n}"]    = { :cpus => VMCPU, :mem => VMMEM, :group => "nfss" } }
   numberOf["MONs"][:value].times       { |n| cluster["MON#{n}"]    = { :cpus => VMCPU, :mem => VMMEM, :group => "mons" } }
 elsif clusterInstall == clusterType["containerized"][:type]
   numberOf["OSDs"][:value].times       { |n| cluster["OSD#{n}"]    = { :cpus => VMCPU, :mem => VMMEM, :group => "osds" } }
+  numberOf["Clients"][:value].times    { |n| cluster["CLIENT#{n}"] = { :cpus => VMCPU, :mem => VMMEM, :group => "clients" } }
 end
 
 
@@ -350,7 +369,7 @@ Vagrant.configure(2) do |config|
               'mdss'         => (0...numberOf["MDSs"][:value]).map    { |j| "MDS#{j}" },
               'rgws'         => (0...numberOf["RGWs"][:value]).map    { |j| "RGW#{j}" },
               'nfss'         => (0...numberOf["NFSs"][:value]).map    { |j| "NFS#{j}" },
-              'iscsi-gws'         => (0...numberOf["iSCSI-GWs"][:value]).map    { |j| "ISCSI#{j}" },
+              # 'iscsi-gws'         => (0...numberOf["iSCSI-GWs"][:value]).map    { |j| "ISCSI#{j}" },
               'clients'      => (0...numberOf["Clients"][:value]).map { |j| "CLIENT#{j}" },
               'rhcs-nodes:children' => ['mons','osds','mdss','rgws','nfss','iscsi-gws','clients']
             }
@@ -361,7 +380,7 @@ Vagrant.configure(2) do |config|
               'mdss'         => (0...numberOf["MDSs"][:value]).map    { |j| "OSD#{j}" },
               'rgws'         => (0...numberOf["RGWs"][:value]).map    { |j| "OSD#{j}" },
               'nfss'         => (0...numberOf["NFSs"][:value]).map    { |j| "OSD#{j}" },
-              'iscsi-gws'         => (0...numberOf["iSCSI-GWs"][:value]).map    { |j| "OSD#{j}" },
+              # 'iscsi-gws'         => (0...numberOf["iSCSI-GWs"][:value]).map    { |j| "OSD#{j}" },
               'clients'      => (0...numberOf["Clients"][:value]).map { |j| "OSD#{j}" },
               'rhcs-nodes:children' => ['mons','osds','mdss','rgws','nfss','iscsi-gws','clients']
             }
