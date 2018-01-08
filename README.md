@@ -10,18 +10,20 @@ Optionally you can choose to deploy the monitoring UI [ceph-metrics](https://git
 * [Ansible](https://ansible.com) (starting 2.4.0.0)
 * [Vagrant](https://www.vagrantup.com) (starting 1.9.1)
 * git
+* `python-netaddr`
 
 ## Before you start - installation instructions for Vagrant / Ansible
 
-#### On RHEL 7.4
+#### On RHEL 7.4 / CentOS 7
 
 * make sure you are logged in as a user with `sudo` privileges
-* make sure your system has the following repositories enabled (`yum repolist`)
+* on RHEL 7 make sure your system has the following repositories enabled (`yum repolist`)
   * rhel-7-server-rpms
   * rhel-7-server-extras-rpms
 * install the requirements
   * `sudo yum groupinstall "Virtualization Host"`
   * `sudo yum install ansible git gcc libvirt-devel`
+  * `sudo yum install python-netaddr`
   * `sudo yum install https://releases.hashicorp.com/vagrant/2.0.1/vagrant_2.0.1_x86_64.rpm`
 * start `libvirtd`
   * `sudo systemctl enable libvirtd`
@@ -40,6 +42,7 @@ Optionally you can choose to deploy the monitoring UI [ceph-metrics](https://git
 * install the requirements
   * `sudo dnf install ansible git gcc libvirt-devel libvirt qemu-kvm`
   * `sudo dnf install vagrant vagrant-libvirt`
+  * `sudo dnf install python-netaddr`
 * start `libvirtd`
   * `sudo systemctl enable libvirtd`
   * `sudo systemctl start libvirtd`
@@ -58,6 +61,10 @@ Optionally you can choose to deploy the monitoring UI [ceph-metrics](https://git
     * `brew install git`
   * install ansible
     * `brew install ansible`
+  * install python pip
+    * `sudo easy_install pip`
+  * install python-netaddr
+    * `pip install netaddr`
 
 
 ## Get started
@@ -105,6 +112,7 @@ Optionally you can choose to deploy the monitoring UI [ceph-metrics](https://git
 	* docker service is enabled and started (using overlay2 on a separate logical volume)
   * `ceph-ansible`'s `site-docker.yml` playbook was executed
   * the selected ceph roles were installed in containers on the OSD nodes (one per node)
+    * as of today containerized iSCSI is not yet supported
 	* cluster is up and in HEALTHY state
 * If you decided to deploy `ceph-metrics`
   * an additional VM will run `ceph-metrics` dashboard components
