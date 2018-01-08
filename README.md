@@ -10,6 +10,7 @@ Optionally you can choose to deploy the monitoring UI [ceph-metrics](https://git
 * [Ansible](https://ansible.com) (starting 2.4.0.0)
 * [Vagrant](https://www.vagrantup.com) (starting 1.9.1)
 * git
+* `python-netaddr`
 
 ## Before you start - installation instructions for Vagrant / Ansible
 
@@ -22,6 +23,7 @@ Optionally you can choose to deploy the monitoring UI [ceph-metrics](https://git
 * install the requirements
   * `sudo yum groupinstall "Virtualization Host"`
   * `sudo yum install ansible git gcc libvirt-devel`
+  * `sudo yum install python-netaddr`
   * `sudo yum install https://releases.hashicorp.com/vagrant/2.0.1/vagrant_2.0.1_x86_64.rpm`
 * start `libvirtd`
   * `sudo systemctl enable libvirtd`
@@ -59,6 +61,10 @@ Optionally you can choose to deploy the monitoring UI [ceph-metrics](https://git
     * `brew install git`
   * install ansible
     * `brew install ansible`
+  * install python pip
+    * `sudo easy_install pip`
+  * install python-netaddr
+    * `pip install netaddr`
 
 
 ## Get started
