@@ -1,0 +1,19 @@
+---
+- hosts: default
+
+  vars:
+    platform: virtualbox
+    os_version: rhel-7
+    rhcs_version: "3.0"
+    update_packages: true
+    sytem_reboot: true
+
+  roles:
+    - yum-repositories
+    - system-update
+    - network-setup
+    - vbox-guest-additions
+    - authorized-key
+    - metrics-server
+    - sshd-config
+...
