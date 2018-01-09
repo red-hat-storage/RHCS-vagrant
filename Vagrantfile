@@ -226,9 +226,9 @@ if ARGV[0] == "up"
   }
 
   if clusterInit == 1
-    print "\e[32m\nI will also initialize the cluster for you using ceph-ansible\n\n"
+    print "\e[32m\nI will also initialize the cluster for you using ceph-ansible\n"
   else
-    print "\e[32m\nI will NOT initialize the cluster but leave an appropriate ceph-ansible setup for your convenience\n\n"
+    print "\e[32m\nI will NOT initialize the cluster but leave an appropriate ceph-ansible setup for your convenience\n"
   end
 
   environment.puts(clusterInit.to_i)
