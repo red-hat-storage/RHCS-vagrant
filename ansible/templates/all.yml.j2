@@ -454,8 +454,10 @@ radosgw_interface: [[ second_nic ]]
 #
 #ceph_conf_overrides: {}
 
-[% if groups['osds']|length <= 2 %]
 ceph_conf_overrides:
+  mon:
+    mon_health_preluminous_compat: true
+[% if groups['osds']|length <= 2 %]
   global:
     osd_pool_default_size: 2
     osd_pool_default_min_size: 1

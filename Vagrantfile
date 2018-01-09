@@ -226,9 +226,9 @@ if ARGV[0] == "up"
   }
 
   if clusterInit == 1
-    print "\e[32m\nI will also initialize the cluster for you using ceph-ansible\n\n"
+    print "\e[32m\nI will also initialize the cluster for you using ceph-ansible\n"
   else
-    print "\e[32m\nI will NOT initialize the cluster but leave an appropriate ceph-ansible setup for your convenience\n\n"
+    print "\e[32m\nI will NOT initialize the cluster but leave an appropriate ceph-ansible setup for your convenience\n"
   end
 
   environment.puts(clusterInit.to_i)
@@ -324,7 +324,7 @@ Vagrant.configure(2) do |config|
 
       machine.vm.provider "libvirt" do |lv, override|
         override.vm.box = "RHCS-vagrant-libvirt"
-        override.vm.box = rhcsLbox
+        override.vm.box_url = rhcsLbox
 
         lv.storage_pool_name = ENV['LIBVIRT_STORAGE_POOL'] || 'default'
 
