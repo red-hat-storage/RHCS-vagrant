@@ -31,6 +31,11 @@ rhcsBox = {
   }
 }
 
+metricsBox = {
+  :virtualbox => "http://file.str.redhat.com/~dmesser/rhcs-vagrant/virtualbox-metrics-server-rhel-7.box",
+  :libvirt => "http://file.str.redhat.com/~dmesser/rhcs-vagrant/libvirt-metrics-server-rhel-7.box"
+}
+
 numberOf = {
   'OSDs'    =>  { :value => -1, :min => 2, :default => 2 },
   'disks'   =>  { :value => -1, :min => 2, :default => 2 },
@@ -53,6 +58,7 @@ rhcsLbox = rhcsBox["default"][:libvirt]
 clusterInit = -1
 clusterInstall = ""
 osdBackend = ""
+metricsInstall = -1
 
 if ARGV[0] == "up"
 
@@ -211,6 +217,20 @@ if ARGV[0] == "up"
     end
   end
 
+  if clusterInit == 1
+    while metricsInstall == -1
+      print "\n\e[1;37mDo you want me set up ceph-metrics for you? [no] \e[32m"
+      response = $stdin.gets.strip.to_s.downcase
+      if response == "y" or response == "yes"
+        metricsInstall = 1
+      elsif response == "" or response == "n" or response == "no"
+        metricsInstall = 0
+      else
+        print "\e[31mPlease enter 'yes' or 'no'\e[32m"
+      end
+    end
+  end
+
   print "\e[32m\nOK I will provision:\n\n"
   environment = open('vagrant_env.conf', 'w')
   environment.puts("# BEWARE: Do NOT modify ANY settings in here or your vagrant environment will be messed up")
@@ -226,7 +246,13 @@ if ARGV[0] == "up"
   }
 
   if clusterInit == 1
-    print "\e[32m\nI will also initialize the cluster for you using ceph-ansible\n"
+    print "\e[32m\nI will also initialize the cluster for you using ceph-ansible"
+
+    if metricsInstall == 1
+      print " and deploy ceph-metrics in a separate VM"
+    end
+
+    print "\n"
   else
     print "\e[32m\nI will NOT initialize the cluster but leave an appropriate ceph-ansible setup for your convenience\n"
   end
@@ -234,6 +260,7 @@ if ARGV[0] == "up"
   environment.puts(clusterInit.to_i)
   environment.puts(clusterInstall.to_s)
   environment.puts(osdBackend.to_s)
+  environment.puts(metricsInstall.to_s)
 
   print "\e[37m\n\n"
 
@@ -248,6 +275,7 @@ else # So that we destroy and can connect to all VMs...
   clusterInit = environment.readline.strip.to_i
   clusterInstall = environment.readline.strip.to_s
   osdBackend = environment.readline.strip.to_s
+  metricsInstall = environment.readline.strip.to_i
 end
 
 environment.close
@@ -407,4 +435,65 @@ Vagrant.configure(2) do |config|
 
   end #end cluster
 
+  if metricsInstall == 1
+    config.vm.define "METRICS" do |machine|
+
+      machine.vm.hostname = "METRICS"
+      machine.vm.synced_folder ".", "/vagrant", disabled: true
+
+      machine.vm.provider "virtualbox" do |vb, override|
+        override.vm.box = "RHCS-metrics-vagrant-virtualbox"
+        override.vm.box_url = metricsBox[:virtualbox]
+
+        # private VM-only network where ceph client traffic will flow
+        override.vm.network "private_network", type: "dhcp", nic_type: "virtio", auto_config: false
+
+        vb.name = "METRICS"
+        vb.memory = VMMEM
+        vb.cpus = VMCPU
+
+        # Make this a linked clone for cow snapshot based root disks
+        vb.linked_clone = true
+
+        # Don't display the VirtualBox GUI when booting the machine
+        vb.gui = false
+
+        # Accelerate SSH / Ansible connections (https://github.com/mitchellh/vagrant/issues/1807)
+        vb.customize ["modifyvm", :id, "--natdnshostresolver1", "on"]
+        vb.customize ["modifyvm", :id, "--natdnsproxy1", "on"]
+      end
+
+      machine.vm.provider "libvirt" do |lv, override|
+        override.vm.box = "RHCS-metrics-vagrant-libvirt"
+        override.vm.box_url = metricsBox[:libvirt]
+
+        lv.storage_pool_name = ENV['LIBVIRT_STORAGE_POOL'] || 'default'
+
+        # Set VM resources
+        lv.memory = VMMEM
+        lv.cpus = VMCPU
+
+        # private VM-only network where ceph client traffic will flow
+        override.vm.network "private_network", type: "dhcp", nic_type: "virtio", auto_config: false
+
+        # Use virtio device drivers
+        lv.nic_model_type = "virtio"
+        lv.disk_bus = "virtio"
+
+        # connect to local libvirtd daemon as root
+        lv.username = "root"
+      end
+
+      machine.vm.provision :ansible do |ansible|
+        ansible.limit = "all"
+        ansible.playbook = "ansible/prepare-environment.yml"
+      end
+
+      machine.vm.provision :ansible do |ansible|
+        ansible.groups = { "metrics" => "METRICS" }
+        ansible.limit = "all"
+        ansible.playbook = "ansible/prepare-metrics.yml"
+      end
+    end
+  end
 end

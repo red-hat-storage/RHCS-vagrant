@@ -1,0 +1,13 @@
+---
+
+- hosts: metrics
+
+  become: true
+
+  tasks:
+    - name: generate cephmetrics-ansible inventory
+      template:
+        src: metrics-inventory.j2
+        dest: /etc/ansible/hosts
+
+...
