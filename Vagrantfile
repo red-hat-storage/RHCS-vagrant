@@ -449,6 +449,9 @@ Vagrant.configure(2) do |config|
         # private VM-only network where ceph client traffic will flow
         override.vm.network "private_network", type: "dhcp", nic_type: "virtio", auto_config: false
 
+        # private VM-only network where ceph client traffic will flow
+        override.vm.network "private_network", type: "dhcp", nic_type: "virtio", auto_config: false
+
         vb.name = "METRICS"
         vb.memory = VMMEM
         vb.cpus = VMCPU
@@ -477,6 +480,9 @@ Vagrant.configure(2) do |config|
         # private VM-only network where ceph client traffic will flow
         override.vm.network "private_network", type: "dhcp", nic_type: "virtio", auto_config: false
 
+        # private VM-only network, on specified 10.0.0.x subnet, where ceph cluster traffic will flow
+        override.vm.network "private_network", type: "dhcp", nic_type: "virtio", auto_config: false, ip: "172.16.0.1"
+
         # Use virtio device drivers
         lv.nic_model_type = "virtio"
         lv.disk_bus = "virtio"
@@ -494,6 +500,13 @@ Vagrant.configure(2) do |config|
         ansible.groups = { "metrics" => "METRICS" }
         ansible.limit = "all"
         ansible.playbook = "ansible/prepare-metrics.yml"
+      end
+
+      machine.vm.provision :ansible_local do |ansible_local|
+        ansible_local.limit = "all"
+        ansible_local.provisioning_path = "/usr/share/cephmetrics-ansible"
+        ansible_local.inventory_path = "/etc/ansible/hosts"
+        ansible_local.playbook = "playbook.yml"
       end
     end
   end
