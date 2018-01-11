@@ -32,6 +32,35 @@
         ["-smp", "cpus=1,cores=2,maxcpus=2"]
       ],
       "vnc_bind_address": "0.0.0.0"
+    },
+    {
+      "name": "metrics-server",
+      "type": "qemu",
+      "accelerator": "kvm",
+      "boot_command": [
+        "<up><tab> text ks=http://{{ .HTTPIP }}:{{ .HTTPPort }}/rhcs-rhel-7-ks.cfg<enter><wait>"
+      ],
+      "boot_wait": "10s",
+      "disk_size": 20480,
+      "headless": true,
+      "http_directory": "kickstart",
+      "iso_url": "{{ user `iso_file_path` }}",
+      "iso_checksum_type": "sha256",
+      "iso_checksum": "431a58c8c0351803a608ffa56948c5a7861876f78ccbe784724dd8c987ff7000",
+      "ssh_username": "vagrant",
+      "ssh_password": "vagrant",
+      "ssh_port": 22,
+      "ssh_wait_timeout": "900s",
+      "shutdown_command": "echo 'vagrant'|sudo -S /sbin/halt -h -p",
+      "disk_interface": "virtio",
+      "net_device": "virtio-net",
+      "format": "qcow2",
+      "vm_name": "packer-rhcs-3.0-rhel-7",
+      "qemuargs": [
+        ["-m", "2048M"],
+        ["-smp", "cpus=1,cores=2,maxcpus=2"]
+      ],
+      "vnc_bind_address": "0.0.0.0"
     }
   ],
   "provisioners": [
@@ -40,6 +69,15 @@
     "only": ["rhcs-node"],
     "user": "vagrant",
     "playbook_file": "ansible/libvirt-rhcs-node-3.0-rhel-7.yml",
+    "extra_arguments": [
+        "--become"
+      ]
+    },
+    {
+    "type": "ansible",
+    "only": ["metrics-server"],
+    "user": "vagrant",
+    "playbook_file": "ansible/libvirt-metrics-server-3.0-rhel-7.yml",
     "extra_arguments": [
         "--become"
       ]
