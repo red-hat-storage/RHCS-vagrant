@@ -17,7 +17,7 @@
 - name: set ansible to be less chatty for cephmetrics-ansible
   lineinfile:
     path: /usr/share/cephmetrics-ansible/ansible.cfg
-    line: "deprecation_warnings = False"
+    line: "deprecation_warnings = dFalse"
     insertafter: '^\[defaults\]$'
     state: present
 
