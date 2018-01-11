@@ -1,6 +1,6 @@
 ---
 
-- name: pre-installing ceph-packages on rhel 7
+- name: pre-installing ceph-packages on centos 7
   yum: name={{ item }} state=present
   with_items:
     - cephmetrics-ansible
