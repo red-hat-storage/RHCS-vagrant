@@ -72,7 +72,7 @@ Optionally you can choose to deploy the monitoring UI [ceph-metrics](https://git
 * Clone this repository
   * `git clone https://github.com/red-hat-storage/RHCS-vagrant.git`
 * Goto the folder in which you cloned this repo
-  * `cd RHGS-vagrant`
+  * `cd RHCS-vagrant`
   * if you are on RHEL/Fedora and you don't want your libvirt storage domain `default` to be used, override the storage domain like this
     * `export LIBVIRT_STORAGE_POOL=images`
 * Run `vagrant up`
