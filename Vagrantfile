@@ -449,6 +449,9 @@ Vagrant.configure(2) do |config|
         # private VM-only network where ceph client traffic will flow
         override.vm.network "private_network", type: "dhcp", nic_type: "virtio", auto_config: false
 
+        # private VM-only network where ceph client traffic will flow
+        override.vm.network "private_network", type: "dhcp", nic_type: "virtio", auto_config: false
+
         vb.name = "METRICS"
         vb.memory = VMMEM
         vb.cpus = VMCPU
@@ -476,6 +479,9 @@ Vagrant.configure(2) do |config|
 
         # private VM-only network where ceph client traffic will flow
         override.vm.network "private_network", type: "dhcp", nic_type: "virtio", auto_config: false
+
+        # private VM-only network, on specified 10.0.0.x subnet, where ceph cluster traffic will flow
+        override.vm.network "private_network", type: "dhcp", nic_type: "virtio", auto_config: false, ip: "172.16.0.1"
 
         # Use virtio device drivers
         lv.nic_model_type = "virtio"
