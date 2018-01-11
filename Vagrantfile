@@ -495,6 +495,13 @@ Vagrant.configure(2) do |config|
         ansible.limit = "all"
         ansible.playbook = "ansible/prepare-metrics.yml"
       end
+
+      machine.vm.provision :ansible_local do |ansible_local|
+        ansible_local.limit = "all"
+        ansible_local.provisioning_path = "/usr/share/cephmetrics-ansible"
+        ansible_local.inventory_path = "/etc/ansible/hosts"
+        ansible_local.playbook = "playbook.yml"
+      end
     end
   end
 end
