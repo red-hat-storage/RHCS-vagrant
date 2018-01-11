@@ -48,7 +48,7 @@ numberOf = {
 }
 
 clusterType = {
-  "default" => { :type => "rpm" },
+  "default" => { :type => "rpm-based" },
   "rpm-based" => { :type => "rpm" },
   "containerized" => { :type => "csd" },
 }
@@ -95,7 +95,8 @@ if ARGV[0] == "up"
     response = $stdin.gets.strip.to_s.downcase
 
     if response == ""
-      clusterInstall = clusterType["default"][:type]
+      defaultInstallType = clusterType["default"][:type]
+      clusterInstall = clusterType[defaultInstallType][:type]
     elsif clusterType.key?(response)
       clusterInstall = clusterType[response][:type]
     else
@@ -189,7 +190,7 @@ if ARGV[0] == "up"
       end
     }
 
-    print "\n\e[1;37mDo you want to provision a client? [yes] \e[32m"
+    print "\n\e[1;37mDo you want to provision a client? [no] \e[32m"
 
     while numberOf["Clients"][:value] < numberOf["Clients"][:min]
       response = $stdin.gets.strip.to_s.downcase
@@ -217,7 +218,7 @@ if ARGV[0] == "up"
     end
   end
 
-  if clusterInit == 1
+  if clusterInit == 1 and clusterInstall == clusterType["rpm-based"][:type]
     while metricsInstall == -1
       print "\n\e[1;37mDo you want me set up ceph-metrics for you? [no] \e[32m"
       response = $stdin.gets.strip.to_s.downcase
@@ -238,7 +239,7 @@ if ARGV[0] == "up"
     environment.puts(settings[:value].to_s)
     if name == 'disks'
       print "  * #{settings[:value]} disks for OSD daemons (#{osdBackend}) in every OSD VM\n"
-    elsif clusterInstall == clusterType["containerized"][:type] and name != "OSDs"
+    elsif clusterInstall == clusterType["containerized"][:type] and name != "OSDs" and name != "Clients"
       print "  * #{settings[:value]} #{name} (co-located with OSD)\n"
     else
       print "  * #{settings[:value]} #{name}\n"
@@ -435,7 +436,7 @@ Vagrant.configure(2) do |config|
 
   end #end cluster
 
-  if metricsInstall == 1
+  if metricsInstall == 1 and clusterInstall == clusterType["rpm-based"][:type]
     config.vm.define "METRICS" do |machine|
 
       machine.vm.hostname = "METRICS"
