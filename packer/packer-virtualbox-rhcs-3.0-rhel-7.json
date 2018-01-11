@@ -179,7 +179,7 @@
     "type": "ansible",
     "only": ["metrics-server"],
     "user": "vagrant",
-    "playbook_file": "ansible/virtualbox-metrics-server-rhel-7.yml",
+    "playbook_file": "ansible/virtualbox-metrics-server-3.0-rhel-7.yml",
     "extra_arguments": [
         "--become"
       ]
