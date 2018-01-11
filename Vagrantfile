@@ -32,8 +32,8 @@ rhcsBox = {
 }
 
 metricsBox = {
-  :virtualbox => "http://file.str.redhat.com/~dmesser/rhcs-vagrant/virtualbox-metrics-server-rhel-7.box",
-  :libvirt => "http://file.str.redhat.com/~dmesser/rhcs-vagrant/libvirt-metrics-server-rhel-7.box"
+  :virtualbox => "http://file.str.redhat.com/~dmesser/rhcs-vagrant/virtualbox-metrics-server-3.0-rhel-7.box",
+  :libvirt => "http://file.str.redhat.com/~dmesser/rhcs-vagrant/libvirt-metrics-server-3.0-rhel-7.box"
 }
 
 numberOf = {
