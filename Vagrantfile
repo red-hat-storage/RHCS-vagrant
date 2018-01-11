@@ -509,7 +509,7 @@ Vagrant.configure(2) do |config|
         ansible_local.playbook = "playbook.yml"
       end
 
-      machine.vm.provision "shell", inline: "echo \n\nCeph Dashboard is reachable at http://$(hostname -I | cut -d' ' -f2):3000/ - username = 'admin' / password = 'admin'\n\n"
+      machine.vm.provision "shell", inline: "echo Ceph Dashboard is reachable at http://$(hostname -I | cut -d' ' -f2):3000/ - username = 'admin' / password = 'admin'"
     end
   end
 end
