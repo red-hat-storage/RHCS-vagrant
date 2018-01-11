@@ -3,5 +3,5 @@
 
 {% for host in groups["all"]|sort %}
 {% set second_nic = hostvars[host].ansible_interfaces | difference(["lo","docker0",hostvars[host].ansible_default_ipv4.alias]) | sort | first %}
-{{ hostvars[host]["ansible_" + second_nic]["ipv4"]["address"] }} {{ hostvars[host]["ansible_hostname"] }} {{ hostvars[host]["ansible_hostname"] }}.local
+{{ hostvars[host]["ansible_" + second_nic]["ipv4"]["address"] }} {{ hostvars[host]["ansible_hostname"] }}.local {{ hostvars[host]["ansible_hostname"] }}
 {% endfor %}

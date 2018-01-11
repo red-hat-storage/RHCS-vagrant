@@ -23,7 +23,7 @@
 
     - name: generate ceph-ansible inventory
       template:
-        src: inventory.j2
+        src: ceph-inventory.j2
         dest: /etc/ansible/hosts
 
     - name: generate ceph-ansible-keys fetch directory

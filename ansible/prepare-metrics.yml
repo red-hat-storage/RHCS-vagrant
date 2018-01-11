@@ -1,0 +1,65 @@
+---
+
+- hosts: all
+
+  become: true
+
+  tasks:
+
+    # https://bugzilla.redhat.com/show_bug.cgi?id=1532645
+    - name: set selinux to permissive due to missing collectd policy
+      selinux: state=permissive policy=targeted
+
+- hosts: metrics
+
+  become: true
+
+  tasks:
+
+    - name: fetch vagrant ssh keys from one of the RHCSs nodes
+      fetch:
+        src: /home/vagrant/.ssh/{{ item }}
+        dest: fetch/
+        flat: yes
+      with_items:
+        - id_rsa
+        - id_rsa.pub
+      delegate_to: "OSD0"
+
+    - name: put keys into vagrant user on METRICS node
+      copy:
+        src: fetch/{{ item }}
+        dest: /home/vagrant/.ssh/
+        owner: vagrant
+        group: vagrant
+        mode: 0400
+      with_items:
+        - id_rsa
+        - id_rsa.pub
+
+    - name: add pub keys to authorized_keys
+      authorized_key:
+        user: vagrant
+        key: "{{ lookup('file', 'fetch/id_rsa.pub') }}"
+        state: present
+
+    - name: fetch ceph-ansible inventory from one of the RHCSs nodes
+      fetch:
+        src: /etc/ansible/hosts
+        dest: fetch/
+        flat: yes
+      delegate_to: "OSD0"
+
+    - name: put ceph-ansible inventory on METRICS node
+      copy:
+        src: fetch/hosts
+        dest: /etc/ansible/hosts
+
+    - name: add cephmetrics to inventory
+      blockinfile:
+        path: /etc/ansible/hosts
+        block: |
+          [ceph-grafana]
+          {{ groups['metrics'] | join('\n') }}
+
+...

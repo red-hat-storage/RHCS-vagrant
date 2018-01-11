@@ -10,3 +10,4 @@ packer_cache
 packer_vars
 packer/output-*
 *.retry
+ansible/fetch
