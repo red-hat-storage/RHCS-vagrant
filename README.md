@@ -114,9 +114,9 @@ Optionally you can choose to deploy the monitoring UI [ceph-metrics](https://git
   * the selected ceph roles were installed in containers on the OSD nodes (one per node)
     * as of today containerized iSCSI is not yet supported
 	* cluster is up and in HEALTHY state
-* If you decided to deploy `ceph-metrics`
-  * an additional VM will run `ceph-metrics` dashboard components
-  *
+* If you decided to deploy `ceph-metrics` (only available when initializing the cluster)
+  * an additional VM called METRICS will run `ceph-metrics` dashboard components
+  * at the end of the metrics deployment you will see the URL to reach the dashboard displayed
 * If you opted out of cluster initialization a working `ceph-ansible` was left in place for your convenience
 
 
