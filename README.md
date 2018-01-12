@@ -70,7 +70,7 @@ Optionally you can choose to deploy the monitoring UI [ceph-metrics](https://git
 ## Get started
 * You **must** be in the Red Hat VPN
 * Clone this repository
-  * `git clone https://github.com/red-hat-storage/RHCS-vagrant.git`
+  * `git clone https://github.com/dmesser/RHCS-vagrant.git`
 * Goto the folder in which you cloned this repo
   * `cd RHCS-vagrant`
   * if you are on RHEL/Fedora and you don't want your libvirt storage domain `default` to be used, override the storage domain like this
