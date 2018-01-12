@@ -12,7 +12,7 @@ Optionally you can choose to deploy the monitoring UI [ceph-metrics](https://git
 * git
 * `python-netaddr`
 
-## Before you start - installation instructions for Vagrant / Ansible
+## Before you start - installation instructions for Vagrant / Ansible and dependencies
 
 #### On RHEL 7.4 / CentOS 7
 
