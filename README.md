@@ -79,8 +79,8 @@ Optionally you can choose to deploy the monitoring UI [ceph-metrics](https://git
   * Decide between the installation type (rpm-based vs. containerized)
 	* Decide whether you want to use filestore or bluestore (the latter is preview)
   * Decide how many OSD nodes and how many devices you need
-	* Decide how many MON, RGW, MDS, etc. nodes you want (rpm-based install)
-	* Decide whether or not and how many additional ceph services (RGW, MDS, etc.) you want to co-locate to the OSD nodes
+	* rpm-based install: decide how many MON, RGW, MDS, etc. nodes you want
+	* containerized install: decide whether or not and how many additional ceph services (RGW, MDS, etc.) you want to co-locate to the OSD nodes
   * Decide if you want a separate client node
   * Decide if you want vagrant to initialize the cluster (using `ceph-ansible`) for you
   * If you opted to initialize the cluster, decide whether you want to deploy `ceph-metrics`
