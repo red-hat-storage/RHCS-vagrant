@@ -218,7 +218,7 @@ if ARGV[0] == "up"
     end
   end
 
-  if clusterInit == 1 and clusterInstall == clusterType["rpm-based"][:type]
+  if clusterInit == 1 and clusterInstall == clusterType["rpm-based"][:type] and osdBackend == "filestore"
     while metricsInstall == -1
       print "\n\e[1;37mDo you want me set up ceph-metrics for you? [no] \e[32m"
       response = $stdin.gets.strip.to_s.downcase

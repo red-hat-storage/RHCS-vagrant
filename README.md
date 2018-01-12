@@ -1,7 +1,7 @@
 # RHCS 3.0 in Vagrant
 
 A Vagrant setup for Red Hat Ceph Storage version 3.0.
-This will setup as many RHCS nodes as you want with a number of OSDs that you can define!
+This will setup as many RHCS nodes as you want with a number of OSDs that you can define! You can choose between rpm-based install or Ceph running in containers.
 Optionally you can choose to deploy the monitoring UI [ceph-metrics](https://github.com/ceph/cephmetrics).
 
 ## Requirements
@@ -12,7 +12,7 @@ Optionally you can choose to deploy the monitoring UI [ceph-metrics](https://git
 * git
 * `python-netaddr`
 
-## Before you start - installation instructions for Vagrant / Ansible
+## Before you start - installation instructions for Vagrant / Ansible and dependencies
 
 #### On RHEL 7.4 / CentOS 7
 
@@ -70,19 +70,20 @@ Optionally you can choose to deploy the monitoring UI [ceph-metrics](https://git
 ## Get started
 * You **must** be in the Red Hat VPN
 * Clone this repository
-  * `git clone https://github.com/red-hat-storage/RHCS-vagrant.git`
+  * `git clone https://github.com/dmesser/RHCS-vagrant.git`
 * Goto the folder in which you cloned this repo
-  * `cd RHGS-vagrant`
+  * `cd RHCS-vagrant`
   * if you are on RHEL/Fedora and you don't want your libvirt storage domain `default` to be used, override the storage domain like this
     * `export LIBVIRT_STORAGE_POOL=images`
 * Run `vagrant up`
   * Decide between the installation type (rpm-based vs. containerized)
 	* Decide whether you want to use filestore or bluestore (the latter is preview)
   * Decide how many OSD nodes and how many devices you need
-	* Decide how many MON, RGW, MDS, etc. nodes you want (rpm-based install)
-	* Decide whether or not you want to co-locate additional ceph services (RGW, MDS, etc.) to the OSD nodes (every OSD node will get an instance of the selected service)
+	* rpm-based install: decide how many MON, RGW, MDS, etc. nodes you want
+	* containerized install: decide whether or not and how many additional ceph services (RGW, MDS, etc.) you want to co-locate to the OSD nodes
+  * Decide if you want a separate client node
   * Decide if you want vagrant to initialize the cluster (using `ceph-ansible`) for you
-  * If you opted to initialize the cluster, decide whether you want to deploy `ceph-metrics`
+  * If you opted to initialize the cluster, decide whether you want to deploy `ceph-metrics` (**only available for rpm-based filestore-backed clusters**)
   * Wait a while
 
 ## Usage
@@ -114,9 +115,9 @@ Optionally you can choose to deploy the monitoring UI [ceph-metrics](https://git
   * the selected ceph roles were installed in containers on the OSD nodes (one per node)
     * as of today containerized iSCSI is not yet supported
 	* cluster is up and in HEALTHY state
-* If you decided to deploy `ceph-metrics`
-  * an additional VM will run `ceph-metrics` dashboard components
-  *
+* If you decided to deploy `ceph-metrics` (only available when initializing the cluster and only for rpm-based install with `filestore` as the OSD backend)
+  * an additional VM called METRICS will run `ceph-metrics` dashboard components
+  * at the end of the metrics deployment you will see the URL to reach the dashboard displayed
 * If you opted out of cluster initialization a working `ceph-ansible` was left in place for your convenience
 
 
