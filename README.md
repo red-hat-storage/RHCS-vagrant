@@ -83,7 +83,7 @@ Optionally you can choose to deploy the monitoring UI [ceph-metrics](https://git
 	* containerized install: decide whether or not and how many additional ceph services (RGW, MDS, etc.) you want to co-locate to the OSD nodes
   * Decide if you want a separate client node
   * Decide if you want vagrant to initialize the cluster (using `ceph-ansible`) for you
-  * If you opted to initialize the cluster, decide whether you want to deploy `ceph-metrics`
+  * If you opted to initialize the cluster, decide whether you want to deploy `ceph-metrics` (**only available for rpm-based filestore-backed clusters**)
   * Wait a while
 
 ## Usage
@@ -115,7 +115,7 @@ Optionally you can choose to deploy the monitoring UI [ceph-metrics](https://git
   * the selected ceph roles were installed in containers on the OSD nodes (one per node)
     * as of today containerized iSCSI is not yet supported
 	* cluster is up and in HEALTHY state
-* If you decided to deploy `ceph-metrics` (only available when initializing the cluster)
+* If you decided to deploy `ceph-metrics` (only available when initializing the cluster and only for rpm-based install with `filestore` as the OSD backend)
   * an additional VM called METRICS will run `ceph-metrics` dashboard components
   * at the end of the metrics deployment you will see the URL to reach the dashboard displayed
 * If you opted out of cluster initialization a working `ceph-ansible` was left in place for your convenience
