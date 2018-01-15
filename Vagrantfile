@@ -53,8 +53,8 @@ clusterType = {
   "containerized" => { :type => "csd" },
 }
 
-rhcsVbox = rhcsBox["default"][:virtualbox]
-rhcsLbox = rhcsBox["default"][:libvirt]
+rhcsVbox = ""
+rhcsLbox = ""
 clusterInit = -1
 clusterInstall = ""
 osdBackend = ""
@@ -71,8 +71,10 @@ if ARGV[0] == "up"
 
     response = $stdin.gets.strip.to_s.downcase
     if response == ""
+      rhcsVbox = rhcsBox["default"][:virtualbox]
+      rhcsLbox = rhcsBox["default"][:libvirt]
       break
-    elsif boxURL.key?(response)
+    elsif rhcsBox.key?(response)
       rhcsVbox = rhcsBox[response][:virtualbox]
       rhcsLbox = rhcsBox[response][:libvirt]
       break
@@ -267,19 +269,23 @@ if ARGV[0] == "up"
 
   system "sleep 1"
 else # So that we destroy and can connect to all VMs...
-  environment = open('vagrant_env.conf', 'r')
+  if(File.file?('vagrant_env.conf'))
+    environment = open('vagrant_env.conf', 'r')
 
-  environment.readline # Skip the comment in the first line
-  numberOf.each { |name, settings|
-    settings[:value] = environment.readline.to_i
-  }
-  clusterInit = environment.readline.strip.to_i
-  clusterInstall = environment.readline.strip.to_s
-  osdBackend = environment.readline.strip.to_s
-  metricsInstall = environment.readline.strip.to_i
+    environment.readline # Skip the comment in the first line
+    numberOf.each { |name, settings|
+      settings[:value] = environment.readline.to_i
+    }
+    clusterInit = environment.readline.strip.to_i
+    clusterInstall = environment.readline.strip.to_s
+    osdBackend = environment.readline.strip.to_s
+    metricsInstall = environment.readline.strip.to_i
+  end
 end
 
-environment.close
+if(File.file?('vagrant_env.conf'))
+  environment.close
+end
 
 
 def vBoxAttachDisks(numDisk, provider, boxName)
