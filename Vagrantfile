@@ -23,17 +23,20 @@ VMDISK = 30       # size of brick disks in GB per VM
 rhcsBox = {
   "default" => {
     :virtualbox => "http://file.str.redhat.com/~dmesser/rhcs-vagrant/virtualbox-rhcs-node-3.0-rhel-7.box",
-    :libvirt => "http://file.str.redhat.com/~dmesser/rhcs-vagrant/libvirt-rhcs-node-3.0-rhel-7.box"
+    :libvirt => "http://file.str.redhat.com/~dmesser/rhcs-vagrant/libvirt-rhcs-node-3.0-rhel-7.box",
+    :version => "rhcs-node-3.0-rhel-7"
   },
   "3.0" => {
     :virtualbox => "http://file.str.redhat.com/~dmesser/rhcs-vagrant/virtualbox-rhcs-node-3.0-rhel-7.box",
-    :libvirt => "http://file.str.redhat.com/~dmesser/rhcs-vagrant/libvirt-rhcs-node-3.0-rhel-7.box"
+    :libvirt => "http://file.str.redhat.com/~dmesser/rhcs-vagrant/libvirt-rhcs-node-3.0-rhel-7.box",
+    :version => "rhcs-node-3.0-rhel-7"
   }
 }
 
 metricsBox = {
   :virtualbox => "http://file.str.redhat.com/~dmesser/rhcs-vagrant/virtualbox-metrics-server-3.0-rhel-7.box",
-  :libvirt => "http://file.str.redhat.com/~dmesser/rhcs-vagrant/libvirt-metrics-server-3.0-rhel-7.box"
+  :libvirt => "http://file.str.redhat.com/~dmesser/rhcs-vagrant/libvirt-metrics-server-3.0-rhel-7.box",
+  :version => "rhcs-metrics-3.0-rhel-7"
 }
 
 numberOf = {
@@ -53,6 +56,7 @@ clusterType = {
   "containerized" => { :type => "csd" },
 }
 
+rhcsVersion = ""
 rhcsVbox = ""
 rhcsLbox = ""
 clusterInit = -1
@@ -73,10 +77,12 @@ if ARGV[0] == "up"
     if response == ""
       rhcsVbox = rhcsBox["default"][:virtualbox]
       rhcsLbox = rhcsBox["default"][:libvirt]
+      rhcsVersion = rhcsBox["default"][:version]
       break
     elsif rhcsBox.key?(response)
       rhcsVbox = rhcsBox[response][:virtualbox]
       rhcsLbox = rhcsBox[response][:libvirt]
+      rhcsVersion = rhcsBox[response][:default]
       break
     else
       puts "Please enter a valid version!"
@@ -358,7 +364,7 @@ Vagrant.configure(2) do |config|
       end
 
       machine.vm.provider "libvirt" do |lv, override|
-        override.vm.box = "RHCS-vagrant-libvirt"
+        override.vm.box = rhcsVersion
         override.vm.box_url = rhcsLbox
 
         lv.storage_pool_name = ENV['LIBVIRT_STORAGE_POOL'] || 'default'
@@ -449,7 +455,7 @@ Vagrant.configure(2) do |config|
       machine.vm.synced_folder ".", "/vagrant", disabled: true
 
       machine.vm.provider "virtualbox" do |vb, override|
-        override.vm.box = "RHCS-metrics-vagrant-virtualbox"
+        override.vm.box = metricsBox[:version]
         override.vm.box_url = metricsBox[:virtualbox]
 
         # private VM-only network where ceph client traffic will flow
@@ -474,7 +480,7 @@ Vagrant.configure(2) do |config|
       end
 
       machine.vm.provider "libvirt" do |lv, override|
-        override.vm.box = "RHCS-metrics-vagrant-libvirt"
+        override.vm.box = metricsBox[:version]
         override.vm.box_url = metricsBox[:libvirt]
 
         lv.storage_pool_name = ENV['LIBVIRT_STORAGE_POOL'] || 'default'
