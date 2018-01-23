@@ -66,15 +66,15 @@ Optionally you can choose to deploy the monitoring UI [ceph-metrics](https://git
   * install python-netaddr
     * `pip install netaddr`
 
-
 ## Get started
 * You **must** be in the Red Hat VPN
 * Clone this repository
-  * `git clone https://github.com/dmesser/RHCS-vagrant.git`
+  * `git clone https://github.com/red-hat-storage/RHCS-vagrant.git`
 * Goto the folder in which you cloned this repo
   * `cd RHCS-vagrant`
-  * if you are on RHEL/Fedora and you don't want your libvirt storage domain `default` to be used, override the storage domain like this
-    * `export LIBVIRT_STORAGE_POOL=images`
+* if you are a returning user run `git pull` to ensure you have the latest updates
+* if you are on RHEL/Fedora and you don't want your libvirt storage domain `default` to be used, override the storage domain like this
+  * `export LIBVIRT_STORAGE_POOL=images`
 * Run `vagrant up`
   * Decide between the installation type (rpm-based vs. containerized)
 	* Decide whether you want to use filestore or bluestore (the latter is preview)
@@ -85,10 +85,12 @@ Optionally you can choose to deploy the monitoring UI [ceph-metrics](https://git
   * Decide if you want vagrant to initialize the cluster (using `ceph-ansible`) for you
   * If you opted to initialize the cluster, decide whether you want to deploy `ceph-metrics` (**only available for rpm-based filestore-backed clusters**)
   * Wait a while
+* If you like to start over: `vagrant destroy -f`
 
 ## Usage
 * *Always make sure you are in the git repo - vagrant only works in there!*
 * After `vagrant up` you can connect to each VM with `vagrant ssh` and the name of the VM you want to connect to
+  * the password for the `vagrant` user is 'vagrant'
 * Each VM is called according to the Ceph node type (e.g. `OSDx` or `MONx` where x starts with 1
   * There is an additional VM called `METRICS` which hosts the Ceph Metrics Monitoring Stack if you selected to deploy it (URL is displayed at the end of `vagrant up`)
 	* If you selected an rpm-based install log on to one of the MON nodes to use ceph client utilities and administer the cluster
@@ -96,9 +98,10 @@ Optionally you can choose to deploy the monitoring UI [ceph-metrics](https://git
   * if you want to throw away everything: `vagrant destroy -f`
   * if you want to freeze the VMs and continue later: `vagrant suspend`
   * Try `vagrant -h` to find out about them
+  * if you run `vagrant up` again you without running `vagrant destroy` before you will overwrite your configuration and vagrant may loose track of some VMs (it's safe to remove them manually)
 * modify the `VMMEM` and `VMCPU` variables in the Vagrant file to change RHCS VM resources, adjust `VMDISK` to change OSD device sizes
 
-## More info
+## What happens under the covers
 * After starting the RHCS VMs on all nodes:
   * the hosts file is pre-populated
   * all ceph packages and docker images are pre-installed (allows you to continue offline)
@@ -120,6 +123,25 @@ Optionally you can choose to deploy the monitoring UI [ceph-metrics](https://git
   * at the end of the metrics deployment you will see the URL to reach the dashboard displayed
 * If you opted out of cluster initialization a working `ceph-ansible` was left in place for your convenience
 
+## Clean up / Refresh images
+
+If you like to clean up disk space or there are updates to the images do the following:
+
+* run `rm ~/.vagrant.d/boxes/*-rhcs-*.box` and `rm ~/.vagrant.d/boxes/*-metrics-*.box` to delete older Vagrant images
+* on VirtualBox - remove the VM instances named `packer-...` (these are base images for the clones)
+* on libvirt
+  * run `virsh vol-list default` to list all images in your `default` storage pool (adjust the name if you are using a different one)
+  * run `virsh vol-delete packer-... default` to delete the images starting with `packer-...` (replace with full name) from the default pool
+
+Next time you do `vagrant up` it will automatically pull new images.
+
+## Known issues
+* `vagrant up` overrides your state - if there are still VMs running and you do `vagrant up` it will override the `vagrant_env.conf` and vagrant will loose track of your existing VMs
+  * try to remember to run `vagrant destroy -f` before you do another `vagrant up`
+  * delete left-over VMs manually in case you forgot
+* containerized installation of RHCS fails at stage `pull {{ ceph_docker_image }} image` with the error message:
+  * Get https://registry.access.redhat.com/v2/rhceph/rhceph-3-rhel7/manifests/latest: read tcp ...: connection reset by peer
+  * the Red Hat Registry is temporarily unavailable - please try again later
 
 ### Creating your own vagrant box
 
@@ -128,7 +150,7 @@ If you - for whatever reason - do not want to use my prebuilt box, you can creat
 **BEWARE** this is for advanced users only!
 
 * Get [packer](https://www.packer.io/)
-* `git checkout` the "packer" branch of this repository, follow the README
+* run `git checkout -b packer` to switch the "packer" branch of this repository, follow the README in packer directory
 
 ## Author
 [Daniel Messer](mailto:dmesser@redhat.com) - [dmesser@redhat.com](mailto:dmesser@redhat.com) -
