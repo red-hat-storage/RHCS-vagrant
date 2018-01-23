@@ -278,6 +278,7 @@ if ARGV[0] == "up"
   environment.puts(clusterInstall.to_s)
   environment.puts(osdBackend.to_s)
   environment.puts(metricsInstall.to_s)
+  environment.puts(rhcsVersion.to_s)
 
   print "\e[37m\n\n"
 
@@ -294,6 +295,7 @@ else # So that we destroy and can connect to all VMs...
     clusterInstall = environment.readline.strip.to_s
     osdBackend = environment.readline.strip.to_s
     metricsInstall = environment.readline.strip.to_i
+    rhcsVersion = environment.readline.strip.to_s
   end
 end
 
@@ -339,11 +341,11 @@ Vagrant.configure(2) do |config|
   cluster.each_with_index do |(hostname, info), index|
     config.vm.define hostname do |machine|
 
-      machine.vm.box = "RHCS-vagrant"
       machine.vm.hostname = hostname
       machine.vm.synced_folder ".", "/vagrant", disabled: true
 
       machine.vm.provider "virtualbox" do |vb, override|
+        override.vm.box = "RHCS-vagrant-virtualbox"
         override.vm.box_url = rhcsVbox
 
         # private VM-only network where ceph client traffic will flow
@@ -372,6 +374,7 @@ Vagrant.configure(2) do |config|
       end
 
       machine.vm.provider "libvirt" do |lv, override|
+        override.vm.box = rhcsVersion
         override.vm.box_url = rhcsLbox
 
         lv.storage_pool_name = ENV['LIBVIRT_STORAGE_POOL'] || 'default'
@@ -458,11 +461,11 @@ Vagrant.configure(2) do |config|
   if metricsInstall == 1 and clusterInstall == clusterType["rpm-based"][:type]
     config.vm.define "METRICS" do |machine|
 
-      machine.vm.box = "RHCS-vagrant-metrics"
       machine.vm.hostname = "METRICS"
       machine.vm.synced_folder ".", "/vagrant", disabled: true
 
       machine.vm.provider "virtualbox" do |vb, override|
+        override.vm.box = metricsBox[:version]
         override.vm.box_url = metricsBox[:virtualbox]
 
         # private VM-only network where ceph client traffic will flow
@@ -487,6 +490,7 @@ Vagrant.configure(2) do |config|
       end
 
       machine.vm.provider "libvirt" do |lv, override|
+        override.vm.box = metricsBox[:version]
         override.vm.box_url = metricsBox[:libvirt]
 
         lv.storage_pool_name = ENV['LIBVIRT_STORAGE_POOL'] || 'default'
