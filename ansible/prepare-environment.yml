@@ -1,0 +1,22 @@
+---
+
+- hosts: all
+
+  become: true
+
+  tasks:
+
+    - name: generate /etc/hosts file for local name resolution
+      template:
+        src: hosts.j2
+        dest: /etc/hosts
+
+    - name: remove generic machine id
+      file:
+        path: /etc/machine-id
+        state: absent
+
+    - name: re-generate machine id
+      shell: systemd-machine-id-setup
+
+...

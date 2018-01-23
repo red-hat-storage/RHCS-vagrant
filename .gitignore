@@ -7,3 +7,5 @@ output-qemu/
 vagrant_env.conf
 *.box
 packer_vars
+*.retry
+ansible/fetch

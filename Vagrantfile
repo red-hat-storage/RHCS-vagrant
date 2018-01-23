@@ -5,238 +5,533 @@
 VAGRANT_ROOT = File.dirname(File.expand_path(__FILE__))
 
 #################
-# Available RHCS base images (1.3.0, 1.3.1, 1.3.2, 2.0.0)
+# Disable parallel runs - breaks ansible call
 #################
-
-boxURL = {
-  "default" => {
-    :name => "RHCS2.2.0"
-  },
-  "1.3.0" => {
-    :name => "RHCS1.3.0"
-  },
-  "1.3.1" => {
-    :name => "RHCS1.3.1"
-  },
-  "1.3.2" => {
-    :name => "RHCS1.3.2"
-  },
-  "1.3.3" => {
-    :name => "RHCS1.3.3"
-  },
-  "2.0.0" => {
-    :name => "RHCS2.0.0"
-  },
-  "2.2.0" => {
-    :name => "RHCS2.0.0"
-  }
-}
-
-RHCS_VERSION = boxURL["default"][:name]
-
-numberOf = {
-  'OSDs' =>     { :value => -1, :min => 2, :max => 99, :default => 2 },
-  'disks' =>    { :value => -1, :min => 2, :max => 9,  :default => 2 },
-  'MONs' =>     { :value => -1, :min => 1, :max => 6,  :default => 1 },
-  'RGWs' =>     { :value => -1, :min => 0, :max => 9,  :default => 0 },
-  'MDSs' =>     { :value => -1, :min => 0, :max => 9,  :default => 0 },
-  'clients' =>  { :value => -1, :min => 0, :max => 19, :default => 0 }
-}
+ENV['VAGRANT_NO_PARALLEL'] = 'yes'
 
 #################
 # General VM settings applied to all VMs
 #################
-SUBNET = "192.168.15."
+VMCPU = 1         # number of cores per VM
+VMMEM = 1536      # amount of memory in MB per VM
+VMDISK = 30       # size of brick disks in GB per VM
+
+#################
+# Available RHCS base images (3.0)
 #################
 
+rhcsBox = {
+  "default" => {
+    :virtualbox => "http://file.str.redhat.com/~dmesser/rhcs-vagrant/virtualbox-rhcs-node-3.0-rhel-7.box",
+    :libvirt => "http://file.str.redhat.com/~dmesser/rhcs-vagrant/libvirt-rhcs-node-3.0-rhel-7.box",
+    :version => "rhcs-node-3.0-rhel-7"
+  },
+  "3.0" => {
+    :virtualbox => "http://file.str.redhat.com/~dmesser/rhcs-vagrant/virtualbox-rhcs-node-3.0-rhel-7.box",
+    :libvirt => "http://file.str.redhat.com/~dmesser/rhcs-vagrant/libvirt-rhcs-node-3.0-rhel-7.box",
+    :version => "rhcs-node-3.0-rhel-7"
+  }
+}
+
+metricsBox = {
+  :virtualbox => "http://file.str.redhat.com/~dmesser/rhcs-vagrant/virtualbox-metrics-server-3.0-rhel-7.box",
+  :libvirt => "http://file.str.redhat.com/~dmesser/rhcs-vagrant/libvirt-metrics-server-3.0-rhel-7.box",
+  :version => "rhcs-metrics-3.0-rhel-7"
+}
+
+numberOf = {
+  'OSD'    =>  { :value => -1, :min => 2, :default => 2 },
+  'disks'   =>  { :value => -1, :min => 2, :default => 2 },
+  'MON'    =>  { :value => -1, :min => 1, :default => 1 },
+  'RGW'    =>  { :value => -1, :min => 0, :default => 0 },
+  'MDS'    =>  { :value => -1, :min => 0, :default => 0 },
+  'NFS'    =>  { :value => -1, :min => 0, :default => 0 },
+  # 'iSCSI-GWs'    =>  { :value => -1, :min => 0, :default => 0 },
+  'Client' =>  { :value => -1, :min => 0, :default => 0 }
+}
+
+clusterType = {
+  "default" => { :type => "rpm-based" },
+  "rpm-based" => { :type => "rpm" },
+  "containerized" => { :type => "csd" },
+}
+
+rhcsVersion = ""
+rhcsVbox = ""
+rhcsLbox = ""
+clusterInit = -1
+clusterInstall = ""
+osdBackend = ""
+metricsInstall = -1
+
 if ARGV[0] == "up"
-  
+
   while true
-    print "\n\e[1;37mWhich version of Ceph do you want to use? Default: 2.2.0 \e[32m"
     print "\n\e[1;37mVersions available: \e[32m\n"
-    boxURL.each { |key, value|
+    rhcsBox.each { |key, value|
       puts ("  * " + key) if not key == "default"
     }
-    answer = $stdin.gets.strip.to_s.downcase
-    if answer == ""
+    print "\n\e[1;37mWhich version of Ceph do you want to use? [3.0] \e[32m"
+
+    response = $stdin.gets.strip.to_s.downcase
+    if response == ""
+      rhcsVbox = rhcsBox["default"][:virtualbox]
+      rhcsLbox = rhcsBox["default"][:libvirt]
+      rhcsVersion = rhcsBox["default"][:version]
       break
-    elsif boxURL.key?(answer)
-      RHCS_VERSION = boxURL[answer][:name]
+    elsif rhcsBox.key?(response)
+      rhcsVbox = rhcsBox[response][:virtualbox]
+      rhcsLbox = rhcsBox[response][:libvirt]
+      rhcsVersion = rhcsBox[response][:default]
       break
     else
-      puts "This version is not available! Please try again..."
+      puts "Please enter a valid version!"
     end
   end
 
-  numberOf.each { |name, settings|
-    print "\n\e[1;37mHow many #{name} do you want me to provision for you? Default: #{settings[:default]} \e[32m"
-    while settings[:value] < settings[:min] or settings[:value] > settings[:max]
-      settings[:value] = $stdin.gets.strip.to_i
-      if settings[:value] == 0 # The user pressed enter without input or we cannot parse the input to a number
-        settings[:value] = settings[:default]
-      elsif settings[:value] < settings[:min]
-        print "\e[31mYou will need at least #{settings[:min]} #{name} for a healthy cluster ;) Try again \e[32m"
-      elsif settings[:value] > settings[:max]
-        print "\e[31mWe don't support more than #{settings[:max]} #{name} - Try again \e[32m"
+
+
+  while clusterInstall == ""
+    print "\n\e[1;37mInstallation Types available: \e[32m\n"
+
+    clusterType.each { |key, value|
+      puts ("  * " + key) if not key == "default"
+    }
+
+    print "\n\e[1;37mPlease choose your installation type [%s] \e[32m" % clusterType["default"][:type]
+
+    response = $stdin.gets.strip.to_s.downcase
+
+    if response == ""
+      defaultInstallType = clusterType["default"][:type]
+      clusterInstall = clusterType[defaultInstallType][:type]
+    elsif clusterType.key?(response)
+      clusterInstall = clusterType[response][:type]
+    else
+      print "\e[31mPlease select a valid installation type!\e[32m"
+    end
+  end
+
+  while osdBackend == ""
+    print "\n\e[1;37mOSD Backend Types available: \e[32m\n"
+
+    ["filestore", "bluestore"].each { |value|
+      puts ("  * " + value)
+    }
+
+    print "\n\e[1;37mWhat type of OSD backend do you want to use? [filestore] \e[32m"
+    response = $stdin.gets.strip.to_s.downcase
+    if response == ""
+      osdBackend = "filestore"
+      break
+    elsif ["filestore", "bluestore"].include?(response)
+      osdBackend = response
+      break
+    else
+      puts "Please enter a valid backend type. Try again!"
+    end
+  end
+
+  if clusterInstall == clusterType["rpm-based"][:type]
+    numberOf.each { |name, settings|
+      if name == "disks"
+        print "\n\e[1;37mHow many disks per OSD node do you want me to provision for you? [#{settings[:default]}] \e[32m"
+      else
+        print "\n\e[1;37mHow many #{name} nodes do you want me to provision for you? [#{settings[:default]}] \e[32m"
+      end
+      while settings[:value] < settings[:min]
+        response = $stdin.gets.strip
+        if response == "0"
+          settings[:value] = 0
+        elsif response == "" or response.to_i == 0 # The user pressed enter without input or we cannot parse the input to a number
+          settings[:value] = settings[:default]
+        else
+          settings[:value] = response.to_i
+        end
+
+        if settings[:value] < settings[:min]
+          print "\e[31mYou will need at least #{settings[:min]} #{name}. Try again! \e[32m"
+        end
+      end
+    }
+  elsif clusterInstall == clusterType["containerized"][:type]
+    numberOf.take(2).each { |name, settings|
+      if name == "disks"
+        print "\n\e[1;37mHow many disks per OSD node do you want me to provision for you? [#{settings[:default]}] \e[32m"
+      else
+        print "\n\e[1;37mHow many #{name} nodes do you want me to provision for you? [#{settings[:default]}] \e[32m"
+      end
+
+      while settings[:value] < settings[:min]
+        response = $stdin.gets.strip
+        if response == "0"
+          settings[:value] = 0
+        elsif response == "" or response.to_i == 0 # The user pressed enter without input or we cannot parse the input to a number
+          settings[:value] = settings[:default]
+        else
+          settings[:value] = response.to_i
+        end
+      end
+
+      if settings[:value] < settings[:min]
+        print "\e[31mYou will need at least #{settings[:min]} #{name}. Try again! \e[32m"
+      end
+    }
+
+    numberOf.drop(2).tap(&:pop).each { |name, settings|
+
+      # if name == "iSCSI-GWs" # ceph-ansible does not support containerized iSCSI yet
+      #   settings[:value] = 0
+      #   next
+      # end
+
+      print "\n\e[1;37mHow many #{name} instances do you want to co-locate? [#{settings[:default]}] \e[32m"
+
+      while settings[:value] < settings[:min] or settings[:value] > numberOf["OSD"][:value]
+        response = $stdin.gets.strip
+
+        if response == "0"
+          settings[:value] = 0
+        elsif response == "" or response.to_i == 0 # The user pressed enter without input or we cannot parse the input to a number
+          settings[:value] = settings[:default]
+        else
+          settings[:value] = response.to_i
+        end
+
+        if settings[:value] < settings[:min]
+          print "\e[31mYou will need at least #{settings[:min]} #{name}. Try again! \e[32m"
+        elsif settings[:value] > numberOf["OSD"][:value]
+          print "\e[31mYou cannot have more than #{numberOf['OSD'][:value]} #{name}. Try again! \e[32m"
+        end
+      end
+    }
+
+    print "\n\e[1;37mDo you want to provision a client? [no] \e[32m"
+
+    while numberOf["Client"][:value] < numberOf["Client"][:min]
+      response = $stdin.gets.strip.to_s.downcase
+
+      if response == "no" or response == "n" or response == "" # The user pressed enter without input
+        numberOf["Client"][:value] = 0
+      elsif response == "yes" or response == "y"
+        numberOf["Client"][:value] = 0
+      else
+        print "\e[31mPlease enter 'yes' or 'no'!"
+        next
       end
     end
-  }
-  while true
-    print "\n\e[1;37mDo you want me to set the ceph cluster up? Default: yes \e[32m"
-    answer = $stdin.gets.strip.to_s.downcase
-    if answer == "" or answer == "y" or answer == "yes"
-      provisionEnvironment = true
-      break
-    elsif answer == "n" or answer == "no"
-      provisionEnvironment = false
-      break
+  end
+
+  while clusterInit == -1
+    print "\n\e[1;37mDo you want me to initialize the cluster for you? [yes] \e[32m"
+    response = $stdin.gets.strip.to_s.downcase
+    if response == "y" or response == "yes" or response == ""
+      clusterInit = 1
+    elsif response == "n" or response == "no"
+      clusterInit = 0
+    else
+      print "\e[31mPlease enter 'yes' or 'no'\e[32m"
     end
   end
 
-  print "\e[32m\nOK I will provision:\n"
+  if clusterInit == 1 and clusterInstall == clusterType["rpm-based"][:type] and osdBackend == "filestore"
+    while metricsInstall == -1
+      print "\n\e[1;37mDo you want me set up ceph-metrics for you? [no] \e[32m"
+      response = $stdin.gets.strip.to_s.downcase
+      if response == "y" or response == "yes"
+        metricsInstall = 1
+      elsif response == "" or response == "n" or response == "no"
+        metricsInstall = 0
+      else
+        print "\e[31mPlease enter 'yes' or 'no'\e[32m"
+      end
+    end
+  end
+
+  print "\e[32m\nOK I will provision:\n\n"
   environment = open('vagrant_env.conf', 'w')
   environment.puts("# BEWARE: Do NOT modify ANY settings in here or your vagrant environment will be messed up")
   numberOf.each { |name, settings|
     environment.puts(settings[:value].to_s)
     if name == 'disks'
-      print "  * #{settings[:value]} disks for OSD daemons in every OSD VM\n"
+      print "  * #{settings[:value]} disks for OSD nodes (#{osdBackend}) in every OSD VM\n"
+    elsif clusterInstall == clusterType["containerized"][:type] and name != "OSD" and name != "Client"
+      print "  * #{settings[:value]} #{name} container(s) (co-located with OSD nodes)\n"
     else
-      print "  * #{settings[:value]} #{name}\n"
+      print "  * #{settings[:value]} #{name} node(s) \n"
     end
   }
+
+  if clusterInit == 1
+    print "\e[32m\nI will also initialize the cluster for you using ceph-ansible"
+
+    if metricsInstall == 1
+      print " and deploy ceph-metrics in a separate VM"
+    end
+
+    print "\n"
+  else
+    print "\e[32m\nI will NOT initialize the cluster but leave an appropriate ceph-ansible setup for your convenience\n"
+  end
+
+  environment.puts(clusterInit.to_i)
+  environment.puts(clusterInstall.to_s)
+  environment.puts(osdBackend.to_s)
+  environment.puts(metricsInstall.to_s)
+  environment.puts(rhcsVersion.to_s)
+
   print "\e[37m\n\n"
 
   system "sleep 1"
 else # So that we destroy and can connect to all VMs...
-  begin
+  if(File.file?('vagrant_env.conf'))
     environment = open('vagrant_env.conf', 'r')
 
     environment.readline # Skip the comment in the first line
     numberOf.each { |name, settings|
       settings[:value] = environment.readline.to_i
-    }    
-  rescue
-    numberOf.each { |name, settings|
-      settings[:value] = settings[:default]
     }
+    clusterInit = environment.readline.strip.to_i
+    clusterInstall = environment.readline.strip.to_s
+    osdBackend = environment.readline.strip.to_s
+    metricsInstall = environment.readline.strip.to_i
+    rhcsVersion = environment.readline.strip.to_s
   end
-
 end
 
-environment.close
-
-
+if(File.file?('vagrant_env.conf'))
+  environment.close
+end
 
 
 def vBoxAttachDisks(numDisk, provider, boxName)
   for i in 1..numDisk.to_i
     file_to_disk = File.join(VAGRANT_ROOT, 'disks', ( boxName + '-' +'disk' + i.to_s + '.vdi' ))
     unless File.exist?(file_to_disk)
-      provider.customize ['createhd', '--filename', file_to_disk, '--size', 100 * 1024] # 30GB brick device
+      provider.customize ['createhd', '--filename', file_to_disk, '--size', VMDISK * 1024] # 30GB brick device
     end
-    provider.customize ['storageattach', :id, '--storagectl', 'SATA', '--port', i, '--device', 0, '--type', 'hdd', '--medium', file_to_disk]
+    provider.customize ['storageattach', :id, '--storagectl', 'SATA Controller', '--port', i, '--device', 0, '--type', 'hdd', '--medium', file_to_disk]
   end
 end
 
 def lvAttachDisks(numDisk, provider)
   for i in 1..numDisk.to_i
-    provider.storage :file, :size => '100G'
+    provider.storage :file, :bus => 'virtio', :size => VMDISK
   end
 end
 
 cluster={}
-numberOf["OSDs"][:value].times       { |n| cluster["OSD#{n}"]    = { :ip => SUBNET + (n + 100).to_s, :cpus => 1, :mem => 1024, :type => "osds" } }
-numberOf["RGWs"][:value].times       { |n| cluster["RGW#{n}"]    = { :ip => SUBNET + (n + 10).to_s,  :cpus => 1, :mem => 1024, :type => "rgws" } }
-numberOf["MDSs"][:value].times       { |n| cluster["MDS#{n}"]    = { :ip => SUBNET + (n + 20).to_s,  :cpus => 1, :mem => 1024, :type => "mdss" } }
-numberOf["clients"][:value].times    { |n| cluster["Client#{n}"] = { :ip => SUBNET + (n + 30).to_s,  :cpus => 1, :mem => 1024, :type => "clients" } }
-numberOf["MONs"][:value].times       { |n| cluster["MON#{n}"]    = { :ip => SUBNET + (n + 2).to_s,   :cpus => 1, :mem => 1024, :type => "mons" } }
 
-hostsFile = ""
-cluster.each do |hostname, info|
-  hostsFile += "#{info[:ip]} #{hostname}\n"
+if clusterInstall == clusterType["rpm-based"][:type]
+  numberOf["OSD"][:value].times       { |n| cluster["OSD#{n}"]    = { :cpus => VMCPU, :mem => VMMEM, :group => "osds" } }
+  numberOf["RGW"][:value].times       { |n| cluster["RGW#{n}"]    = { :cpus => VMCPU, :mem => VMMEM, :group => "rgws" } }
+  numberOf["MDS"][:value].times       { |n| cluster["MDS#{n}"]    = { :cpus => VMCPU, :mem => VMMEM, :group => "mdss" } }
+  numberOf["Client"][:value].times    { |n| cluster["CLIENT#{n}"] = { :cpus => VMCPU, :mem => VMMEM, :group => "clients" } }
+  numberOf["NFS"][:value].times       { |n| cluster["NFS#{n}"]    = { :cpus => VMCPU, :mem => VMMEM, :group => "nfss" } }
+  # numberOf["iSCSI-GWs"][:value].times  { |n| cluster["ISCSI#{n}"]    = { :cpus => VMCPU, :mem => VMMEM, :group => "nfss" } }
+  numberOf["MON"][:value].times       { |n| cluster["MON#{n}"]    = { :cpus => VMCPU, :mem => VMMEM, :group => "mons" } }
+elsif clusterInstall == clusterType["containerized"][:type]
+  numberOf["OSD"][:value].times       { |n| cluster["OSD#{n}"]    = { :cpus => VMCPU, :mem => VMMEM, :group => "osds" } }
+  numberOf["Client"][:value].times    { |n| cluster["CLIENT#{n}"] = { :cpus => VMCPU, :mem => VMMEM, :group => "clients" } }
 end
+
 
 Vagrant.configure(2) do |config|
 
-  # if Vagrant.has_plugin?("vagrant-cachier")
-  #   config.cache.scope = :machine
-  #   # config.cache.enable :apt
-  # end
-  config.vm.box_url = "http://file.rdu.redhat.com/~cblum/vagrant-storage/#{RHCS_VERSION}.json"
-
   cluster.each_with_index do |(hostname, info), index|
-    config.vm.define hostname do |cfg|
+    config.vm.define hostname do |machine|
 
-      cfg.vm.network "private_network", ip: info[:ip]
-      cfg.vm.hostname = hostname
+      machine.vm.hostname = hostname
+      machine.vm.synced_folder ".", "/vagrant", disabled: true
 
-      cfg.vm.provider "virtualbox" do |vb, override|
-        override.vm.box = RHCS_VERSION
+      machine.vm.provider "virtualbox" do |vb, override|
+        override.vm.box = "RHCS-vagrant-virtualbox"
+        override.vm.box_url = rhcsVbox
+
+        # private VM-only network where ceph client traffic will flow
+        override.vm.network "private_network", type: "dhcp", nic_type: "virtio", auto_config: false
+
+        # private VM-only network, on specified 10.0.0.x subnet, where ceph cluster traffic will flow
+        override.vm.network "private_network", type: "dhcp", nic_type: "virtio", auto_config: false, ip: "172.16.0.1"
+
         vb.name = hostname
         vb.memory = info[:mem]
         vb.cpus = info[:cpus]
-        vBoxAttachDisks( numberOf["disks"][:value], vb, hostname )
+
+        # Make this a linked clone for cow snapshot based root disks
+        vb.linked_clone = true
+
+        # Don't display the VirtualBox GUI when booting the machine
+        vb.gui = false
+
+        # Accelerate SSH / Ansible connections (https://github.com/mitchellh/vagrant/issues/1807)
+        vb.customize ["modifyvm", :id, "--natdnshostresolver1", "on"]
+        vb.customize ["modifyvm", :id, "--natdnsproxy1", "on"]
+
+        if info[:group] == "osds"
+          vBoxAttachDisks( numberOf["disks"][:value], vb, hostname )
+        end
       end
 
-      cfg.vm.provider "libvirt" do |lv, override|
-        override.vm.box = RHCS_VERSION
-        override.vm.synced_folder '.', '/vagrant', type: 'rsync', rsync__args: ["--verbose", "--archive", "--delete"]
+      machine.vm.provider "libvirt" do |lv, override|
+        override.vm.box = rhcsVersion
+        override.vm.box_url = rhcsLbox
+
+        lv.storage_pool_name = ENV['LIBVIRT_STORAGE_POOL'] || 'default'
+
+        # Set VM resources
         lv.memory = info[:mem]
         lv.cpus = info[:cpus]
-        lvAttachDisks( numberOf["disks"][:value], lv )
+
+        # private VM-only network where ceph client traffic will flow
+        override.vm.network "private_network", type: "dhcp", nic_type: "virtio", auto_config: false
+
+        # private VM-only network, on specified 10.0.0.x subnet, where ceph cluster traffic will flow
+        override.vm.network "private_network", type: "dhcp", nic_type: "virtio", auto_config: false, ip: "172.16.0.1"
+
+        # Use virtio device drivers
+        lv.nic_model_type = "virtio"
+        lv.disk_bus = "virtio"
+
+        # connect to local libvirtd daemon as root
+        lv.username = "root"
+
+        if info[:group] == "osds"
+          lvAttachDisks( numberOf["disks"][:value], lv )
+        end
       end
 
       # provision nodes with ansible
-      if index == cluster.size - 1 and ( provisionEnvironment or ARGV[0] == "provision" )
+      if index == cluster.size - 1
 
-        cfg.vm.provision :ansible_local do |ansible|
-          ansible.provisioning_path = '/vagrant/ceph-ansible/'
-          ansible.playbook = "/vagrant/ceph-ansible/site.yml.sample"
-          ansible.install = false
-          # ansible.sudo = true
-          # ansible.verbose = true
-          ansible.verbose = 'vvvv'
-          ansible.limit = 'all'
-          ansible.groups = {
-            'mons'         => (0...numberOf["MONs"][:value]).map    { |j| "MON#{j}" },
-            'osds'         => (0...numberOf["OSDs"][:value]).map    { |j| "OSD#{j}" },
-            'mdss'         => (0...numberOf["MDSs"][:value]).map    { |j| "MDS#{j}" },
-            'rgws'         => (0...numberOf["RGWs"][:value]).map    { |j| "RGW#{j}" },
-            'clients'      => (0...numberOf["clients"][:value]).map { |j| "Client#{j}" }
-          }
-          # Ugly but necessay: https://github.com/mitchellh/vagrant/issues/6726
-          ansible.raw_arguments = [
-            "--skip-tags",
-            "'package-install'",
-            "--extra-vars",
-            "'osd_auto_discovery=true journal_collocation=true journal_size=1024 ceph_rhcs=true ceph_rhcs_version=2 ceph_rhcs_cdn_install=true cluster_network=\"#{SUBNET}0/24\" public_network=\"#{SUBNET}0/24\" monitor_interface=\"eth1\"'"
-          ]
-        end # end provision
-      end #end if
+        machine.vm.provision :ansible do |ansible|
+          ansible.limit = "all"
+          ansible.playbook = "ansible/prepare-environment.yml"
+        end
+
+        machine.vm.provision :ansible do |ansible|
+          ansible.limit = "all"
+          ansible.extra_vars = { install_type: clusterInstall, osd_type: osdBackend }
+
+          if clusterInstall == clusterType["rpm-based"][:type]
+            ansible.groups = {
+              'mons'         => (0...numberOf["MON"][:value]).map    { |j| "MON#{j}" },
+              'osds'         => (0...numberOf["OSD"][:value]).map    { |j| "OSD#{j}" },
+              'mdss'         => (0...numberOf["MDS"][:value]).map    { |j| "MDS#{j}" },
+              'rgws'         => (0...numberOf["RGW"][:value]).map    { |j| "RGW#{j}" },
+              'nfss'         => (0...numberOf["NFS"][:value]).map    { |j| "NFS#{j}" },
+              # 'iscsi-gws'         => (0...numberOf["iSCSI-GWs"][:value]).map    { |j| "ISCSI#{j}" },
+              'clients'      => (0...numberOf["Client"][:value]).map { |j| "CLIENT#{j}" },
+              'rhcs-nodes:children' => ['mons','osds','mdss','rgws','nfss','iscsi-gws','clients']
+            }
+          elsif clusterInstall == clusterType["containerized"][:type]
+            ansible.groups = {
+              'mons'         => (0...numberOf["MON"][:value]).map    { |j| "OSD#{j}" },
+              'osds'         => (0...numberOf["OSD"][:value]).map    { |j| "OSD#{j}" },
+              'mdss'         => (0...numberOf["MDS"][:value]).map    { |j| "OSD#{j}" },
+              'rgws'         => (0...numberOf["RGW"][:value]).map    { |j| "OSD#{j}" },
+              'nfss'         => (0...numberOf["NFS"][:value]).map    { |j| "OSD#{j}" },
+              # 'iscsi-gws'         => (0...numberOf["iSCSI-GWs"][:value]).map    { |j| "OSD#{j}" },
+              'clients'      => (0...numberOf["Client"][:value]).map { |j| "OSD#{j}" },
+              'rhcs-nodes:children' => ['mons','osds','mdss','rgws','nfss','iscsi-gws','clients']
+            }
+          end
+          ansible.playbook = "ansible/prepare-ceph.yml"
+        end
+
+        if clusterInit == 1
+          machine.vm.provision :ansible_local do |ansible_local|
+            ansible_local.limit = "all"
+            ansible_local.provisioning_path = "/usr/share/ceph-ansible"
+            ansible_local.inventory_path = "/etc/ansible/hosts"
+
+            if clusterInstall == clusterType["rpm-based"][:type]
+              ansible_local.playbook = "site.yml.sample"
+            elsif clusterInstall == clusterType["containerized"][:type]
+              ansible_local.playbook = "site-docker.yml.sample"
+            end
+          end
+        end # end clusterinit
+      end #end provisioning
 
     end # end config
 
   end #end cluster
 
-  # The flow is outside->in so that this will run before all node specific Shell skripts mentioned above!
-  config.vm.provision "shell", inline: <<-SHELL
-    echo '#{hostsFile}' | sudo tee -a /etc/hosts
-    echo 'Host *' | sudo tee -a /root/.ssh/config
-    echo ' StrictHostKeyChecking no' | sudo tee -a /root/.ssh/config
-    echo ' UserKnownHostsFile=/dev/null' | sudo tee -a /root/.ssh/config
-    echo 'vagrant' | passwd --stdin vagrant
-    ifdown eth1; ifup eth1 # Hotfix weird ip address glitch in libvirt
-  SHELL
+  if metricsInstall == 1 and clusterInstall == clusterType["rpm-based"][:type]
+    config.vm.define "METRICS" do |machine|
 
-  # Fix broken detection for ansible 2+ in vagrant 1.8.1 :(
-  # https://github.com/mitchellh/vagrant/issues/6793
-  config.vm.provision :shell, inline: <<-SCRIPT
-    GALAXY=/usr/local/bin/ansible-galaxy
-    echo '#!/usr/bin/env bash
-    /usr/bin/ansible-galaxy "$@"
-    exit 0
-    ' | sudo tee $GALAXY
-    sudo chmod 0755 $GALAXY
-  SCRIPT
+      machine.vm.hostname = "METRICS"
+      machine.vm.synced_folder ".", "/vagrant", disabled: true
 
+      machine.vm.provider "virtualbox" do |vb, override|
+        override.vm.box = metricsBox[:version]
+        override.vm.box_url = metricsBox[:virtualbox]
+
+        # private VM-only network where ceph client traffic will flow
+        override.vm.network "private_network", type: "dhcp", nic_type: "virtio", auto_config: false
+
+        # private VM-only network where ceph client traffic will flow
+        override.vm.network "private_network", type: "dhcp", nic_type: "virtio", auto_config: false
+
+        vb.name = "METRICS"
+        vb.memory = VMMEM
+        vb.cpus = VMCPU
+
+        # Make this a linked clone for cow snapshot based root disks
+        vb.linked_clone = true
+
+        # Don't display the VirtualBox GUI when booting the machine
+        vb.gui = false
+
+        # Accelerate SSH / Ansible connections (https://github.com/mitchellh/vagrant/issues/1807)
+        vb.customize ["modifyvm", :id, "--natdnshostresolver1", "on"]
+        vb.customize ["modifyvm", :id, "--natdnsproxy1", "on"]
+      end
+
+      machine.vm.provider "libvirt" do |lv, override|
+        override.vm.box = metricsBox[:version]
+        override.vm.box_url = metricsBox[:libvirt]
+
+        lv.storage_pool_name = ENV['LIBVIRT_STORAGE_POOL'] || 'default'
+
+        # Set VM resources
+        lv.memory = VMMEM
+        lv.cpus = VMCPU
+
+        # private VM-only network where ceph client traffic will flow
+        override.vm.network "private_network", type: "dhcp", nic_type: "virtio", auto_config: false
+
+        # private VM-only network, on specified 10.0.0.x subnet, where ceph cluster traffic will flow
+        override.vm.network "private_network", type: "dhcp", nic_type: "virtio", auto_config: false, ip: "172.16.0.1"
+
+        # Use virtio device drivers
+        lv.nic_model_type = "virtio"
+        lv.disk_bus = "virtio"
+
+        # connect to local libvirtd daemon as root
+        lv.username = "root"
+      end
+
+      machine.vm.provision :ansible do |ansible|
+        ansible.limit = "all"
+        ansible.playbook = "ansible/prepare-environment.yml"
+      end
+
+      machine.vm.provision :ansible do |ansible|
+        ansible.groups = { "metrics" => "METRICS" }
+        ansible.limit = "all"
+        ansible.playbook = "ansible/prepare-metrics.yml"
+      end
+
+      machine.vm.provision :ansible_local do |ansible_local|
+        ansible_local.limit = "all"
+        ansible_local.provisioning_path = "/usr/share/cephmetrics-ansible"
+        ansible_local.inventory_path = "/etc/ansible/hosts"
+        ansible_local.playbook = "playbook.yml"
+      end
+
+      machine.vm.provision "shell", inline: "echo Ceph Dashboard is reachable at http://$(hostname -I | cut -d' ' -f2):3000/ - username = 'admin' / password = 'admin'"
+    end
+  end
 end

@@ -1,0 +1,60 @@
+{% if groups['mons'] is defined and groups['mons']|length > 0 %}
+[mons]
+{% for host in groups['mons'] %}
+{{ host }}
+{% endfor %}
+{% endif %}
+
+{% if groups['mons'] is defined and groups['mons']|length > 0 %}
+[mgrs]
+{% for host in groups['mons'] %}
+{{ host }}
+{% endfor %}
+{% endif %}
+
+{% if groups['osds'] is defined and groups['osds']|length > 0 %}
+[osds]
+{% for host in groups['osds'] %}
+{{ host }}
+{% endfor %}
+{% endif %}
+
+{% if groups['rgws'] is defined and groups['rgws']|length > 0 %}
+[rgws]
+{% for host in groups['rgws'] %}
+{{ host }}
+{% endfor %}
+{% endif %}
+
+{% if groups['mdss'] is defined and groups['mdss']|length > 0 %}
+[mdss]
+{% for host in groups['mdss'] %}
+{{ host }}
+{% endfor %}
+{% endif %}
+
+{% if groups['nfss'] is defined and groups['nfss']|length > 0 %}
+[nfss]
+{% for host in groups['nfss'] %}
+{{ host }}
+{% endfor %}
+{% endif %}
+
+{% if groups['iscsi-gws'] is defined and groups['iscsi-gws']|length > 0 %}
+[iscsi-gws]
+{% for host in groups['iscsi-gws'] %}
+{{ host }}
+{% endfor %}
+{% endif %}
+
+{% if groups['clients'] is defined and groups['clients']|length > 0 %}
+[clients]
+{% for host in groups['clients'] %}
+{{ host }}
+{% endfor %}
+{% endif %}
+
+[ceph-grafana]
+{% for host in groups['metrics'] %}
+{{ host }}
+{% endfor %}

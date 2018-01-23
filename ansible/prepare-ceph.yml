@@ -1,0 +1,36 @@
+---
+
+- hosts: rhcs-nodes
+
+  become: true
+
+  vars:
+    install_type: rpm
+    osd_type: filestore
+
+  tasks:
+
+    - name: generate ceph-ansible configuration
+      template:
+        src: "{{ item }}"
+        dest: /usr/share/ceph-ansible/group_vars/{{ item | basename | regex_replace('\.j2$', '') }}
+        block_start_string: "[%"
+        block_end_string: "%]"
+        variable_start_string: "[["
+        variable_end_string: "]]"
+      with_fileglob:
+        - "templates/*.yml.j2"
+
+    - name: generate ceph-ansible inventory
+      template:
+        src: ceph-inventory.j2
+        dest: /etc/ansible/hosts
+
+    - name: generate ceph-ansible-keys fetch directory
+      file:
+        path: "/home/vagrant/ceph-ansible-keys"
+        state: directory
+        owner: vagrant
+        group: vagrant
+
+...
