@@ -23,28 +23,31 @@ VMDISK = 30       # size of brick disks in GB per VM
 rhcsBox = {
   "default" => {
     :virtualbox => "http://file.str.redhat.com/~dmesser/rhcs-vagrant/virtualbox-rhcs-node-3.0-rhel-7.box",
-    :libvirt => "http://file.str.redhat.com/~dmesser/rhcs-vagrant/libvirt-rhcs-node-3.0-rhel-7.box"
+    :libvirt => "http://file.str.redhat.com/~dmesser/rhcs-vagrant/libvirt-rhcs-node-3.0-rhel-7.box",
+    :version => "rhcs-node-3.0-rhel-7"
   },
   "3.0" => {
     :virtualbox => "http://file.str.redhat.com/~dmesser/rhcs-vagrant/virtualbox-rhcs-node-3.0-rhel-7.box",
-    :libvirt => "http://file.str.redhat.com/~dmesser/rhcs-vagrant/libvirt-rhcs-node-3.0-rhel-7.box"
+    :libvirt => "http://file.str.redhat.com/~dmesser/rhcs-vagrant/libvirt-rhcs-node-3.0-rhel-7.box",
+    :version => "rhcs-node-3.0-rhel-7"
   }
 }
 
 metricsBox = {
   :virtualbox => "http://file.str.redhat.com/~dmesser/rhcs-vagrant/virtualbox-metrics-server-3.0-rhel-7.box",
-  :libvirt => "http://file.str.redhat.com/~dmesser/rhcs-vagrant/libvirt-metrics-server-3.0-rhel-7.box"
+  :libvirt => "http://file.str.redhat.com/~dmesser/rhcs-vagrant/libvirt-metrics-server-3.0-rhel-7.box",
+  :version => "rhcs-metrics-3.0-rhel-7"
 }
 
 numberOf = {
-  'OSDs'    =>  { :value => -1, :min => 2, :default => 2 },
+  'OSD'    =>  { :value => -1, :min => 2, :default => 2 },
   'disks'   =>  { :value => -1, :min => 2, :default => 2 },
-  'MONs'    =>  { :value => -1, :min => 1, :default => 1 },
-  'RGWs'    =>  { :value => -1, :min => 0, :default => 0 },
-  'MDSs'    =>  { :value => -1, :min => 0, :default => 0 },
-  'NFSs'    =>  { :value => -1, :min => 0, :default => 0 },
+  'MON'    =>  { :value => -1, :min => 1, :default => 1 },
+  'RGW'    =>  { :value => -1, :min => 0, :default => 0 },
+  'MDS'    =>  { :value => -1, :min => 0, :default => 0 },
+  'NFS'    =>  { :value => -1, :min => 0, :default => 0 },
   # 'iSCSI-GWs'    =>  { :value => -1, :min => 0, :default => 0 },
-  'Clients' =>  { :value => -1, :min => 0, :default => 0 }
+  'Client' =>  { :value => -1, :min => 0, :default => 0 }
 }
 
 clusterType = {
@@ -53,6 +56,7 @@ clusterType = {
   "containerized" => { :type => "csd" },
 }
 
+rhcsVersion = ""
 rhcsVbox = ""
 rhcsLbox = ""
 clusterInit = -1
@@ -73,10 +77,12 @@ if ARGV[0] == "up"
     if response == ""
       rhcsVbox = rhcsBox["default"][:virtualbox]
       rhcsLbox = rhcsBox["default"][:libvirt]
+      rhcsVersion = rhcsBox["default"][:version]
       break
     elsif rhcsBox.key?(response)
       rhcsVbox = rhcsBox[response][:virtualbox]
       rhcsLbox = rhcsBox[response][:libvirt]
+      rhcsVersion = rhcsBox[response][:default]
       break
     else
       puts "Please enter a valid version!"
@@ -128,7 +134,11 @@ if ARGV[0] == "up"
 
   if clusterInstall == clusterType["rpm-based"][:type]
     numberOf.each { |name, settings|
-      print "\n\e[1;37mHow many #{name} do you want me to provision for you? [#{settings[:default]}] \e[32m"
+      if name == "disks"
+        print "\n\e[1;37mHow many disks per OSD node do you want me to provision for you? [#{settings[:default]}] \e[32m"
+      else
+        print "\n\e[1;37mHow many #{name} nodes do you want me to provision for you? [#{settings[:default]}] \e[32m"
+      end
       while settings[:value] < settings[:min]
         response = $stdin.gets.strip
         if response == "0"
@@ -146,7 +156,11 @@ if ARGV[0] == "up"
     }
   elsif clusterInstall == clusterType["containerized"][:type]
     numberOf.take(2).each { |name, settings|
-      print "\n\e[1;37mHow many #{name} do you want me to provision for you? [#{settings[:default]}] \e[32m"
+      if name == "disks"
+        print "\n\e[1;37mHow many disks per OSD node do you want me to provision for you? [#{settings[:default]}] \e[32m"
+      else
+        print "\n\e[1;37mHow many #{name} nodes do you want me to provision for you? [#{settings[:default]}] \e[32m"
+      end
 
       while settings[:value] < settings[:min]
         response = $stdin.gets.strip
@@ -171,9 +185,9 @@ if ARGV[0] == "up"
       #   next
       # end
 
-      print "\n\e[1;37mHow many #{name} do you want to co-locate? [#{settings[:default]}] \e[32m"
+      print "\n\e[1;37mHow many #{name} instances do you want to co-locate? [#{settings[:default]}] \e[32m"
 
-      while settings[:value] < settings[:min] or settings[:value] > numberOf["OSDs"][:value]
+      while settings[:value] < settings[:min] or settings[:value] > numberOf["OSD"][:value]
         response = $stdin.gets.strip
 
         if response == "0"
@@ -186,21 +200,21 @@ if ARGV[0] == "up"
 
         if settings[:value] < settings[:min]
           print "\e[31mYou will need at least #{settings[:min]} #{name}. Try again! \e[32m"
-        elsif settings[:value] > numberOf["OSDs"][:value]
-          print "\e[31mYou cannot have more than #{numberOf['OSDs'][:value]} #{name}. Try again! \e[32m"
+        elsif settings[:value] > numberOf["OSD"][:value]
+          print "\e[31mYou cannot have more than #{numberOf['OSD'][:value]} #{name}. Try again! \e[32m"
         end
       end
     }
 
     print "\n\e[1;37mDo you want to provision a client? [no] \e[32m"
 
-    while numberOf["Clients"][:value] < numberOf["Clients"][:min]
+    while numberOf["Client"][:value] < numberOf["Client"][:min]
       response = $stdin.gets.strip.to_s.downcase
 
       if response == "no" or response == "n" or response == "" # The user pressed enter without input
-        numberOf["Clients"][:value] = 0
+        numberOf["Client"][:value] = 0
       elsif response == "yes" or response == "y"
-        numberOf["Clients"][:value] = 0
+        numberOf["Client"][:value] = 0
       else
         print "\e[31mPlease enter 'yes' or 'no'!"
         next
@@ -240,11 +254,11 @@ if ARGV[0] == "up"
   numberOf.each { |name, settings|
     environment.puts(settings[:value].to_s)
     if name == 'disks'
-      print "  * #{settings[:value]} disks for OSD daemons (#{osdBackend}) in every OSD VM\n"
-    elsif clusterInstall == clusterType["containerized"][:type] and name != "OSDs" and name != "Clients"
-      print "  * #{settings[:value]} #{name} (co-located with OSD)\n"
+      print "  * #{settings[:value]} disks for OSD nodes (#{osdBackend}) in every OSD VM\n"
+    elsif clusterInstall == clusterType["containerized"][:type] and name != "OSD" and name != "Client"
+      print "  * #{settings[:value]} #{name} container(s) (co-located with OSD nodes)\n"
     else
-      print "  * #{settings[:value]} #{name}\n"
+      print "  * #{settings[:value]} #{name} node(s) \n"
     end
   }
 
@@ -307,16 +321,16 @@ end
 cluster={}
 
 if clusterInstall == clusterType["rpm-based"][:type]
-  numberOf["OSDs"][:value].times       { |n| cluster["OSD#{n}"]    = { :cpus => VMCPU, :mem => VMMEM, :group => "osds" } }
-  numberOf["RGWs"][:value].times       { |n| cluster["RGW#{n}"]    = { :cpus => VMCPU, :mem => VMMEM, :group => "rgws" } }
-  numberOf["MDSs"][:value].times       { |n| cluster["MDS#{n}"]    = { :cpus => VMCPU, :mem => VMMEM, :group => "mdss" } }
-  numberOf["Clients"][:value].times    { |n| cluster["CLIENT#{n}"] = { :cpus => VMCPU, :mem => VMMEM, :group => "clients" } }
-  numberOf["NFSs"][:value].times       { |n| cluster["NFS#{n}"]    = { :cpus => VMCPU, :mem => VMMEM, :group => "nfss" } }
+  numberOf["OSD"][:value].times       { |n| cluster["OSD#{n}"]    = { :cpus => VMCPU, :mem => VMMEM, :group => "osds" } }
+  numberOf["RGW"][:value].times       { |n| cluster["RGW#{n}"]    = { :cpus => VMCPU, :mem => VMMEM, :group => "rgws" } }
+  numberOf["MDS"][:value].times       { |n| cluster["MDS#{n}"]    = { :cpus => VMCPU, :mem => VMMEM, :group => "mdss" } }
+  numberOf["Client"][:value].times    { |n| cluster["CLIENT#{n}"] = { :cpus => VMCPU, :mem => VMMEM, :group => "clients" } }
+  numberOf["NFS"][:value].times       { |n| cluster["NFS#{n}"]    = { :cpus => VMCPU, :mem => VMMEM, :group => "nfss" } }
   # numberOf["iSCSI-GWs"][:value].times  { |n| cluster["ISCSI#{n}"]    = { :cpus => VMCPU, :mem => VMMEM, :group => "nfss" } }
-  numberOf["MONs"][:value].times       { |n| cluster["MON#{n}"]    = { :cpus => VMCPU, :mem => VMMEM, :group => "mons" } }
+  numberOf["MON"][:value].times       { |n| cluster["MON#{n}"]    = { :cpus => VMCPU, :mem => VMMEM, :group => "mons" } }
 elsif clusterInstall == clusterType["containerized"][:type]
-  numberOf["OSDs"][:value].times       { |n| cluster["OSD#{n}"]    = { :cpus => VMCPU, :mem => VMMEM, :group => "osds" } }
-  numberOf["Clients"][:value].times    { |n| cluster["CLIENT#{n}"] = { :cpus => VMCPU, :mem => VMMEM, :group => "clients" } }
+  numberOf["OSD"][:value].times       { |n| cluster["OSD#{n}"]    = { :cpus => VMCPU, :mem => VMMEM, :group => "osds" } }
+  numberOf["Client"][:value].times    { |n| cluster["CLIENT#{n}"] = { :cpus => VMCPU, :mem => VMMEM, :group => "clients" } }
 end
 
 
@@ -358,7 +372,7 @@ Vagrant.configure(2) do |config|
       end
 
       machine.vm.provider "libvirt" do |lv, override|
-        override.vm.box = "RHCS-vagrant-libvirt"
+        override.vm.box = rhcsVersion
         override.vm.box_url = rhcsLbox
 
         lv.storage_pool_name = ENV['LIBVIRT_STORAGE_POOL'] || 'default'
@@ -399,24 +413,24 @@ Vagrant.configure(2) do |config|
 
           if clusterInstall == clusterType["rpm-based"][:type]
             ansible.groups = {
-              'mons'         => (0...numberOf["MONs"][:value]).map    { |j| "MON#{j}" },
-              'osds'         => (0...numberOf["OSDs"][:value]).map    { |j| "OSD#{j}" },
-              'mdss'         => (0...numberOf["MDSs"][:value]).map    { |j| "MDS#{j}" },
-              'rgws'         => (0...numberOf["RGWs"][:value]).map    { |j| "RGW#{j}" },
-              'nfss'         => (0...numberOf["NFSs"][:value]).map    { |j| "NFS#{j}" },
+              'mons'         => (0...numberOf["MON"][:value]).map    { |j| "MON#{j}" },
+              'osds'         => (0...numberOf["OSD"][:value]).map    { |j| "OSD#{j}" },
+              'mdss'         => (0...numberOf["MDS"][:value]).map    { |j| "MDS#{j}" },
+              'rgws'         => (0...numberOf["RGW"][:value]).map    { |j| "RGW#{j}" },
+              'nfss'         => (0...numberOf["NFS"][:value]).map    { |j| "NFS#{j}" },
               # 'iscsi-gws'         => (0...numberOf["iSCSI-GWs"][:value]).map    { |j| "ISCSI#{j}" },
-              'clients'      => (0...numberOf["Clients"][:value]).map { |j| "CLIENT#{j}" },
+              'clients'      => (0...numberOf["Client"][:value]).map { |j| "CLIENT#{j}" },
               'rhcs-nodes:children' => ['mons','osds','mdss','rgws','nfss','iscsi-gws','clients']
             }
           elsif clusterInstall == clusterType["containerized"][:type]
             ansible.groups = {
-              'mons'         => (0...numberOf["MONs"][:value]).map    { |j| "OSD#{j}" },
-              'osds'         => (0...numberOf["OSDs"][:value]).map    { |j| "OSD#{j}" },
-              'mdss'         => (0...numberOf["MDSs"][:value]).map    { |j| "OSD#{j}" },
-              'rgws'         => (0...numberOf["RGWs"][:value]).map    { |j| "OSD#{j}" },
-              'nfss'         => (0...numberOf["NFSs"][:value]).map    { |j| "OSD#{j}" },
+              'mons'         => (0...numberOf["MON"][:value]).map    { |j| "OSD#{j}" },
+              'osds'         => (0...numberOf["OSD"][:value]).map    { |j| "OSD#{j}" },
+              'mdss'         => (0...numberOf["MDS"][:value]).map    { |j| "OSD#{j}" },
+              'rgws'         => (0...numberOf["RGW"][:value]).map    { |j| "OSD#{j}" },
+              'nfss'         => (0...numberOf["NFS"][:value]).map    { |j| "OSD#{j}" },
               # 'iscsi-gws'         => (0...numberOf["iSCSI-GWs"][:value]).map    { |j| "OSD#{j}" },
-              'clients'      => (0...numberOf["Clients"][:value]).map { |j| "OSD#{j}" },
+              'clients'      => (0...numberOf["Client"][:value]).map { |j| "OSD#{j}" },
               'rhcs-nodes:children' => ['mons','osds','mdss','rgws','nfss','iscsi-gws','clients']
             }
           end
@@ -449,7 +463,7 @@ Vagrant.configure(2) do |config|
       machine.vm.synced_folder ".", "/vagrant", disabled: true
 
       machine.vm.provider "virtualbox" do |vb, override|
-        override.vm.box = "RHCS-metrics-vagrant-virtualbox"
+        override.vm.box = metricsBox[:version]
         override.vm.box_url = metricsBox[:virtualbox]
 
         # private VM-only network where ceph client traffic will flow
@@ -474,7 +488,7 @@ Vagrant.configure(2) do |config|
       end
 
       machine.vm.provider "libvirt" do |lv, override|
-        override.vm.box = "RHCS-metrics-vagrant-libvirt"
+        override.vm.box = metricsBox[:version]
         override.vm.box_url = metricsBox[:libvirt]
 
         lv.storage_pool_name = ENV['LIBVIRT_STORAGE_POOL'] || 'default'
