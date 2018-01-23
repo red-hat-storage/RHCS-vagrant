@@ -1,0 +1,28 @@
+---
+
+- name: update all packages
+  package:
+    name: "*"
+    state: latest
+  when:
+    - update_packages is defined
+    - update_packages
+
+- block:
+  - name: reboot system
+    shell: sleep 2 && /sbin/shutdown -r now "Ansible system package upgraded"
+    async: 1
+    poll: 0
+
+  - name: wait for host to come back
+    wait_for_connection:
+      delay: 30
+      sleep: 5
+      connect_timeout: 300
+  when:
+    - update_packages is defined
+    - update_packages
+    - system_reboot is defined
+    - system_reboot
+
+...

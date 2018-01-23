@@ -1,0 +1,6 @@
+---
+
+- name: stop and disable docker
+  service: name=docker state=stopped enabled=no
+
+...

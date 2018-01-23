@@ -1,0 +1,8 @@
+---
+
+- name: install centos storage sig repositories
+  yum:
+    name: centos-release-ceph
+    enablerepo: extras
+
+...

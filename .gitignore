@@ -1,4 +1,3 @@
-packer_cache
 .vagrant
 disks
 ssh_conf
@@ -6,6 +5,9 @@ output-qemu/
 .vagrant/
 vagrant_env.conf
 *.box
+packer/inventory
+packer_cache
 packer_vars
+packer/output-*
 *.retry
 ansible/fetch

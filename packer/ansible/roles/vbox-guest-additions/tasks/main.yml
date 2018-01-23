@@ -1,0 +1,39 @@
+---
+
+- name: determine version of running kernel
+  shell: uname -r
+  register: uname_r
+
+- set_fact:
+    kernel_version: "{{ uname_r.stdout }}"
+
+- name: install kernel sources and development tooling
+  yum: name={{ item }} state=present
+  with_items:
+    - kernel-devel-{{ kernel_version }}
+    - "@Development Tools"
+
+- name: mount vbox guest additions iso
+  shell: mount -o loop,ro /home/vagrant/vbox_guest_additions.iso /mnt
+  args:
+    warn: no
+
+- name: run vbox guest additions installer
+  shell: sh VBoxLinuxAdditions.run --nox11
+  args:
+    chdir: /mnt
+
+- name: umount vbox guest additions iso
+  shell: umount /mnt
+  args:
+    warn: no
+
+- name: remove vbox guest additions iso
+  file:
+    path: /home/vagrant/vbox_guest_additions.iso
+    state: absent
+
+- name: enable vbox guest additions service
+  service: name=vboxadd-service.service state=started enabled=yes
+
+...

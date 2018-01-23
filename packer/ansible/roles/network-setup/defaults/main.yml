@@ -1,0 +1,4 @@
+---
+os_version: rhel-7
+platform: virtualbox
+...

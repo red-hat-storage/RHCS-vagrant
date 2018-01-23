@@ -1,0 +1,16 @@
+---
+
+- include_tasks: scenarios/rhcs-3.0-rhel-7.yml
+  when:
+    - os_version is defined
+    - os_version == "rhel-7"
+    - rhcs_version is defined
+    - rhcs_version == "3.0"
+
+- include_tasks: scenarios/rhcs-3.0-centos-7.yml
+  when:
+    - os_version is defined
+    - os_version == "centos-7"
+    - rhcs_version is defined
+    - rhcs_version == "3.0"
+...

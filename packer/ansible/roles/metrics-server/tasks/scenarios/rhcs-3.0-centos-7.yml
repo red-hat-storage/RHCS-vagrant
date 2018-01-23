@@ -1,0 +1,25 @@
+---
+
+- name: pre-installing ceph-packages on centos 7
+  yum: name={{ item }} state=present
+  with_items:
+    - cephmetrics-ansible
+    - cephmetrics
+    - python-requests
+
+- name: set ansible to be less chatty for cephmetrics-ansible
+  lineinfile:
+    path: /usr/share/cephmetrics-ansible/ansible.cfg
+    line: "stdout_callback = actionable"
+    insertafter: '^\[defaults\]$'
+    state: present
+
+- name: set ansible to be less chatty for cephmetrics-ansible
+  lineinfile:
+    path: /usr/share/cephmetrics-ansible/ansible.cfg
+    line: "deprecation_warnings = False"
+    insertafter: '^\[defaults\]$'
+    state: present
+
+
+...

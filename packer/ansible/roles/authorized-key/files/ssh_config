@@ -1,0 +1,3 @@
+Host MON* OSD* RGW* MDS* NFS* ISCSI* CLIENT* METRICS*
+  StrictHostKeyChecking no
+  UserKnownHostsFile /dev/null

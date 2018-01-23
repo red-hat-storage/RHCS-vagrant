@@ -1,0 +1,34 @@
+---
+
+- name: install firewalld
+  yum: name=firewalld state=present
+
+- name: enable and start firewalld
+  service: name=firewalld state=started enabled=yes
+
+- name: open required ports on public network
+  firewalld:
+    port: "{{ item }}"
+    zone: public
+    state: enabled
+    permanent: yes
+    immediate: yes
+  with_items:
+    - 22/tcp
+    - 9090/tcp
+
+- name: open required ports on ceph public network
+  firewalld:
+    port: "{{ item }}"
+    zone: internal
+    state: enabled
+    permanent: yes
+    immediate: yes
+  with_items:
+    - 22/tcp
+    - 80/tcp
+    - 2003-2004/tcp
+    - 3000/tcp
+    - 7002/tcp
+
+...

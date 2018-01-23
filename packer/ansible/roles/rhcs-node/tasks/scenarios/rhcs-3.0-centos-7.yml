@@ -1,0 +1,47 @@
+---
+
+- name: pre-installing ceph-packages on centos 7
+  yum: name={{ item }} state=present
+  with_items:
+    - ceph-base
+    - ceph-common
+    - ceph-selinux
+    - ceph-osd
+    - ceph-mon
+    - ceph-mgr
+    - cephmetrics-collectors
+    - ceph-fuse
+    - ceph-iscsi-cli
+    - ceph-iscsi-config
+    - ceph-iscsi-tools
+    - ceph-mds
+    - ceph-medic
+    - ceph-radosgw
+    - nfs-ganesha
+    - nfs-ganesha-ceph
+    - nfs-ganesha-rgw
+    - tcmu-runner
+    - ntp
+    - hdparm
+    - python-setuptools
+    - python-pycurl
+    - ceph-ansible
+
+- name: set ansible to be less chatty for ceph-ansible
+  lineinfile:
+    path: /usr/share/ceph-ansible/ansible.cfg
+    line: "stdout_callback = actionable"
+    insertafter: '^\[defaults\]$'
+    state: present
+
+- name: disable deprecation warnings for ceph-ansible
+  lineinfile:
+    path: /usr/share/ceph-ansible/ansible.cfg
+    line: "deprecation_warnings = False"
+    insertafter: '^\[defaults\]$'
+    state: present
+
+- name: pre-downloading ceph container image
+  docker_image: name=registry.hub.docker.com/ceph/tag-stable-3.0-luminous-centos-7
+
+...
