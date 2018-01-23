@@ -9,6 +9,7 @@ This directory holds packer configuration files for the following combinations o
 |Storage Software|Operating System|VM Platform|Packer file|
 |---|---|---|---|
 |Red Hat Ceph Storage 3.0|Red Hat Enterprise Linux 7|VirtualBox|packer-virtualbox-rhcs-3.0-rhel-7.json|
+|Red Hat Ceph Storage 3.0|Red Hat Enterprise Linux 7|libvirtd|packer-libvirt-rhcs-3.0-rhel-7.json|
 
 
 ## Requirements
@@ -26,9 +27,9 @@ This directory holds packer configuration files for the following combinations o
 * Download OS disc ISO (e.g. RHEL 7.4 Binary DVD)
   * put it somewhere (e.g. /tmp/rhel-server-7.4-x86_64-dvd.iso)
 * Clone this repository
-  * `git clone -b packer https://github.com/dmesser/RHGS-vagrant.git`
+  * `git clone -b packer https://github.com/red-hat-storage/RHCS-vagrant.git`
 * Goto the folder in which you cloned this repo
-  * `cd RHGS-vagrant/packer`
+  * `cd RHCS-vagrant/packer`
 * If yo have already cloned this repo earlier, make sure you are up to update
   * `git pull`
 * Tell packer where to find your ISO, e.g.
