@@ -1,6 +1,6 @@
 # RHCS 3.0 in Vagrant
 
-A Vagrant setup for Red Hat Ceph Storage version 3.0.
+A Vagrant setup for Red Hat Ceph Storage version 3.0 running in VMs on your machine.
 This will setup as many RHCS nodes as you want with a number of OSDs that you can define! You can choose between rpm-based install or Ceph running in containers.
 Optionally you can choose to deploy the monitoring UI [ceph-metrics](https://github.com/ceph/cephmetrics).
 
@@ -122,6 +122,13 @@ Optionally you can choose to deploy the monitoring UI [ceph-metrics](https://git
   * an additional VM called METRICS will run `ceph-metrics` dashboard components
   * at the end of the metrics deployment you will see the URL to reach the dashboard displayed
 * If you opted out of cluster initialization a working `ceph-ansible` was left in place for your convenience
+
+## Customize your Ceph installation
+
+* in the ansible/templates folder there are group variable files for `ceph-ansible` for every host type it supports
+* if you like to make customizations, edit these files as needed
+* during provisioning (`vagrant up` or `vagrant provision`) these files will be copied to the nodes so they are picked up by the installation routine
+* WARNING: these files are processed as Jinja2 template files by this Vagrant setup - modify contents in square brackets (`[[ ... ]]` or `[% %]` at your own risk)
 
 ## Clean up / Refresh images
 
