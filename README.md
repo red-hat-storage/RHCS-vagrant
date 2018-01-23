@@ -155,7 +155,7 @@ Next time you do `vagrant up` it will automatically pull new images.
 * ceph-metrics is not showing current data (doesn't show RGW or MDS)
   * if you deployed many VMs and your system is under memory pressure ceph-metrics might need up to 10 minutes reconcile cluster state
 * on RHEL/CentOS you will get some Ruby warnings caused by older Gem versions when running Vagrant commands:
-  * `/home/dmesser/.vagrant.d/gems/2.4.2/gems/nokogiri-1.6.8.1/lib/nokogiri/xml/document.rb:44: warning: constant ::Fixnum is deprecated`
+  * `... .vagrant.d/gems/2.4.2/gems/nokogiri-1.6.8.1/lib/nokogiri/xml/document.rb:44: warning: constant ::Fixnum is deprecated`
   * this is just a warning, functionality is not impacted
 
 ### Creating your own vagrant box
