@@ -223,11 +223,11 @@ if ARGV[0] == "up"
   end
 
   while clusterInit == -1
-    print "\n\e[1;37mDo you want me to initialize the cluster for you? [no] \e[32m"
+    print "\n\e[1;37mDo you want me to initialize the cluster for you? [yes] \e[32m"
     response = $stdin.gets.strip.to_s.downcase
-    if response == "y" or response == "yes"
+    if response == "y" or response == "yes" or response == ""
       clusterInit = 1
-    elsif response == "" or response == "n" or response == "no"
+    elsif response == "n" or response == "no"
       clusterInit = 0
     else
       print "\e[31mPlease enter 'yes' or 'no'\e[32m"
