@@ -90,10 +90,13 @@ Optionally you can choose to deploy the monitoring UI [ceph-metrics](https://git
 ## Usage
 * *Always make sure you are in the git repo - vagrant only works in there!*
 * After `vagrant up` you can connect to each VM with `vagrant ssh` and the name of the VM you want to connect to
-  * the password for the `vagrant` user is 'vagrant'
+  * FYI the password for the `vagrant` user is 'vagrant' but you shouldn't need it
 * Each VM is called according to the Ceph node type (e.g. `OSDx` or `MONx` where x starts with 1
   * There is an additional VM called `METRICS` which hosts the Ceph Metrics Monitoring Stack if you selected to deploy it (URL is displayed at the end of `vagrant up`)
 	* If you selected an rpm-based install log on to one of the MON nodes to use ceph client utilities and administer the cluster
+  * If you selected an containerized install log on to one of the OSD nodes and execute a shell inside one of the MON containers
+    * `docker exec -it ceph-mon bash`
+* run `sudo ceph -s` on one of the MONx nodes (rpm-based installed) or `ceph -s` inside the MON containers on OSDx nodes (containerized install) to check for your cluster status
 * There are also other vagrant commands you should check out!
   * if you want to throw away everything: `vagrant destroy -f`
   * if you want to freeze the VMs and continue later: `vagrant suspend`
