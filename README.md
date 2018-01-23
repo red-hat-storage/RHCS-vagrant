@@ -152,6 +152,8 @@ Next time you do `vagrant up` it will automatically pull new images.
 * containerized installation of RHCS fails at stage `pull {{ ceph_docker_image }} image` with the error message:
   * Get https://registry.access.redhat.com/v2/rhceph/rhceph-3-rhel7/manifests/latest: read tcp ...: connection reset by peer
   * the Red Hat Registry is temporarily unavailable - please try again later
+* ceph-metrics is not showing current data (doesn't show RGW or MDS)
+  * if you deployed many VMs and your system is under memory pressure ceph-metrics might need up to 10 minutes reconcile cluster state
 
 ### Creating your own vagrant box
 
