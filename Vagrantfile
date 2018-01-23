@@ -278,6 +278,7 @@ if ARGV[0] == "up"
   environment.puts(clusterInstall.to_s)
   environment.puts(osdBackend.to_s)
   environment.puts(metricsInstall.to_s)
+  environment.puts(rhcsVersion.to_s)
 
   print "\e[37m\n\n"
 
@@ -294,6 +295,7 @@ else # So that we destroy and can connect to all VMs...
     clusterInstall = environment.readline.strip.to_s
     osdBackend = environment.readline.strip.to_s
     metricsInstall = environment.readline.strip.to_i
+    rhcsVersion = environment.readline.strip.to_s
   end
 end
 
