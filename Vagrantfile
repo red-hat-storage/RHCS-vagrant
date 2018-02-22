@@ -9,6 +9,31 @@ VAGRANT_ROOT = File.dirname(File.expand_path(__FILE__))
 #################
 ENV['VAGRANT_NO_PARALLEL'] = 'yes'
 
+module OS
+    def OS.windows?
+        (/cygwin|mswin|mingw|bccwin|wince|emx/ =~ RUBY_PLATFORM) != nil
+    end
+
+    def OS.mac?
+        (/darwin/ =~ RUBY_PLATFORM) != nil
+    end
+
+    def OS.linux?
+        not OS.windows? and not OS.mac?
+    end
+end
+
+#################
+# Set vagrant default provider according to OS detected
+#################
+if OS.windows?
+  ENV['VAGRANT_DEFAULT_PROVIDER'] = 'virtualbox'
+elsif OS.mac?
+  ENV['VAGRANT_DEFAULT_PROVIDER'] = 'virtualbox'
+elsif OS.linux?
+  ENV['VAGRANT_DEFAULT_PROVIDER'] = 'libvirt'
+end
+
 #################
 # General VM settings applied to all VMs
 #################
